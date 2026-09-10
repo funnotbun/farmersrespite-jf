@@ -114,7 +114,7 @@ public class ItemStackHandler implements ItemHandler {
         validateSlotIndex(slot);
 
         ItemStack invItemStack = inventory.get(slot);
-        int limit = getStackLimit(slot, invItemStack);
+        int limit = getStackLimit(slot, stack);
 
         if (!invItemStack.isEmpty()) {
             if (!canItemStacksStack(stack, invItemStack)) {
