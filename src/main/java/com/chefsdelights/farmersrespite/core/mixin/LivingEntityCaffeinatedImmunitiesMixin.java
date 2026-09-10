@@ -3,6 +3,7 @@ package com.chefsdelights.farmersrespite.core.mixin;
 
 import com.chefsdelights.farmersrespite.common.effect.CaffeinatedEffect;
 import com.chefsdelights.farmersrespite.core.registry.FREffects;
+import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -18,7 +19,7 @@ import java.util.Map;
 public abstract class LivingEntityCaffeinatedImmunitiesMixin {
 
     @Shadow
-    public abstract Map<MobEffect, MobEffectInstance> getActiveEffectsMap();
+    public abstract Map<Holder<MobEffect>, MobEffectInstance> getActiveEffectsMap();
 
     @Inject(
             at = @At("HEAD"),

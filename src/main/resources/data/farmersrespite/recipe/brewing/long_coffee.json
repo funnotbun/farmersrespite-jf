@@ -1,0 +1,16 @@
+{
+  "type": "farmersrespite:brewing",
+  "ingredients": [
+    "farmersrespite:coffee",
+    "#c:milk"
+  ],
+  "result": {
+    "id": "farmersrespite:long_coffee"
+  },
+  "container": {
+    "id": "minecraft:glass_bottle"
+  },
+  "experience": 0.35,
+  "brewingtime": 2400,
+  "needWater": false
+}

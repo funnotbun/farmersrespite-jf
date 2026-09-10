@@ -1,0 +1,16 @@
+{
+  "type": "farmersrespite:brewing",
+  "ingredients": [
+    "minecraft:cocoa_beans",
+    "minecraft:sugar"
+  ],
+  "result": {
+    "id": "farmersdelight:hot_cocoa"
+  },
+  "container": {
+    "id": "farmersdelight:milk_bottle"
+  },
+  "experience": 0.35,
+  "brewingtime": 100,
+  "needWater": false
+}

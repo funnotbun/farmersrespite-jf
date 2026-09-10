@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_c_milk": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "#c:milk"
+          },
+          {
+            "items": "farmersdelight:apple_cider"
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "farmersrespite:brewing/long_apple_cider"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_c_milk"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "farmersrespite:brewing/long_apple_cider"
+    ]
+  }
+}

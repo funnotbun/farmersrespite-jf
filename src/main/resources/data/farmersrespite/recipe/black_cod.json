@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:cooked_cod",
+    "#c:crops/black_tea_leaves",
+    "minecraft:bowl",
+    "#c:crops/cabbage",
+    "farmersdelight:cooked_rice"
+  ],
+  "result": {
+    "id": "farmersrespite:black_cod"
+  }
+}

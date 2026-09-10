@@ -1,7 +1,9 @@
 package com.chefsdelights.farmersrespite.common.effect;
 
+import com.chefsdelights.farmersrespite.core.FarmersRespite;
 import com.chefsdelights.farmersrespite.core.registry.FREffects;
-import com.google.common.collect.Sets;
+import net.minecraft.core.Holder;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.stats.StatsCounter;
@@ -13,37 +15,31 @@ import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
-import java.util.Objects;
 import java.util.Set;
 
 public class CaffeinatedEffect extends MobEffect {
-    public static final Set<MobEffect> CAFFINATED_IMMUNITIES = Sets.newHashSet(MobEffects.MOVEMENT_SLOWDOWN, MobEffects.DIG_SLOWDOWN);
+    public static final Set<Holder<MobEffect>> CAFFINATED_IMMUNITIES = Set.of(MobEffects.SLOWNESS, MobEffects.MINING_FATIGUE);
 
     public CaffeinatedEffect() {
         super(MobEffectCategory.BENEFICIAL, 12161815);
-        addAttributeModifier(Attributes.MOVEMENT_SPEED, "ca4cd828-53ad-4ce7-93da-92684d75be47", 0.1F, AttributeModifier.Operation.MULTIPLY_TOTAL);
-        addAttributeModifier(Attributes.ATTACK_SPEED, "3e07acfc-7b1d-40a1-af8c-fbe34be88b3a", 0.5F, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        addAttributeModifier(Attributes.MOVEMENT_SPEED, FarmersRespite.id("caffeinated"), 0.1F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        addAttributeModifier(Attributes.ATTACK_SPEED, FarmersRespite.id("caffeinated_strength"), 0.5F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
     @Override
-    public void addAttributeModifiers(LivingEntity entity, AttributeMap attributes, int amplifier) {
-        super.addAttributeModifiers(entity, attributes, amplifier);
-        Objects.requireNonNull(entity);
+    public boolean applyEffectTick(ServerLevel level, LivingEntity entity, int amplifier) {
         CAFFINATED_IMMUNITIES.forEach(entity::removeEffect);
-    }
-
-    @Override
-    public void applyEffectTick(LivingEntity entity, int amplifier) {
-        if (this == FREffects.CAFFEINATED) {
+        if (this == FREffects.CAFFEINATED.value()) {
             if (entity instanceof ServerPlayer player) {
                 StatsCounter statHandler = player.getStats();
                 statHandler.increment(player, Stats.CUSTOM.get(Stats.TIME_SINCE_REST), -(24000 * (amplifier + 1)));
             }
         }
+        return true;
     }
 
     @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         return true;
     }
 }

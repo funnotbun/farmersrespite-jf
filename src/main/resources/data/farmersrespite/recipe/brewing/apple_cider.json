@@ -1,0 +1,13 @@
+{
+  "type": "farmersrespite:brewing",
+  "ingredients": [
+    "minecraft:apple",
+    "minecraft:sugar"
+  ],
+  "result": {
+    "id": "farmersdelight:apple_cider"
+  },
+  "experience": 0.35,
+  "brewingtime": 100,
+  "needWater": true
+}

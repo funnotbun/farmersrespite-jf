@@ -24,7 +24,7 @@ import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -34,7 +34,7 @@ public class CoffeeMiddleStemBlock extends BushBlock implements BonemealableBloc
     public static final VoxelShape SHAPE = Block.box(5.0D, 0.0D, 5.0D, 11.0D, 16.0D, 11.0D);
 
     public static final IntegerProperty AGE = BlockStateProperties.AGE_2;
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
 
     public CoffeeMiddleStemBlock(Properties properties) {
@@ -58,13 +58,13 @@ public class CoffeeMiddleStemBlock extends BushBlock implements BonemealableBloc
     }
 
     @Override
-    public void playerWillDestroy(Level pLevel, BlockPos pPos, BlockState pState, Player pPlayer) {
+    public BlockState playerWillDestroy(Level pLevel, BlockPos pPos, BlockState pState, Player pPlayer) {
         pLevel.destroyBlock(pPos.below(), true, pPlayer);
-        super.playerWillDestroy(pLevel, pPos, pState, pPlayer);
+        return super.playerWillDestroy(pLevel, pPos, pState, pPlayer);
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean b) {
         return new ItemStack(FRItems.COFFEE_BEANS);
     }
 
@@ -82,7 +82,7 @@ public class CoffeeMiddleStemBlock extends BushBlock implements BonemealableBloc
                 if (neighborState.getBlock() instanceof CropBlock) {
                     level.setBlockAndUpdate(neighborPos, witherRootsState);
                     performBonemeal(level, random, pos, state);
-                } else if (level.dimensionType().ultraWarm()) {
+                } else if (level.dimension() == Level.NETHER) {
                     performBonemeal(level, random, pos, state);
                 }
             }
@@ -90,23 +90,23 @@ public class CoffeeMiddleStemBlock extends BushBlock implements BonemealableBloc
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult result) {
+    public InteractionResult useItemOn(ItemStack stack, BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         int i = state.getValue(AGE);
         boolean flag = i == 2;
-        if (!flag && player.getItemInHand(handIn).getItem() == Items.BONE_MEAL) {
+        if (!flag && player.getItemInHand(hand).getItem() == Items.BONE_MEAL) {
             return InteractionResult.PASS;
         } else if (i == 2) {
             popResource(world, pos, new ItemStack(FRItems.COFFEE_BERRIES, 1));
-            world.playSound(player, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
+            world.playSound(player, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + world.getRandom().nextFloat() * 0.4F);
             world.setBlock(pos, state.setValue(AGE, 0), 2);
-            return InteractionResult.sidedSuccess(world.isClientSide);
+            return InteractionResult.SUCCESS;
         } else {
-            return super.use(state, world, pos, player, handIn, result);
+            return super.useItemOn(stack, state, world, pos, player, hand, hit);
         }
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state, boolean isClient) {
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
         int i = state.getValue(AGE);
         return !(i == 2);
     }

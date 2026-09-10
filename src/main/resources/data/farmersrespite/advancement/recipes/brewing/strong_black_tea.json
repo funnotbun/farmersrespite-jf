@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_farmersrespite_black_tea": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "farmersrespite:black_tea"
+          },
+          {
+            "items": "minecraft:honey_bottle"
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "farmersrespite:brewing/strong_black_tea"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_farmersrespite_black_tea"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "farmersrespite:brewing/strong_black_tea"
+    ]
+  }
+}

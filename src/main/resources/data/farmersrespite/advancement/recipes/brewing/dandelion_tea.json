@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_farmersrespite_tea_leaves": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "#farmersrespite:tea_leaves"
+          },
+          {
+            "items": "minecraft:dandelion"
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "farmersrespite:brewing/dandelion_tea"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_farmersrespite_tea_leaves"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "farmersrespite:brewing/dandelion_tea"
+    ]
+  }
+}

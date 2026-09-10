@@ -1,14 +1,13 @@
 package com.chefsdelights.farmersrespite.common.block.entity.inventory;
 
-import blue.endless.jankson.annotation.Nullable;
-import com.nhoryzon.mc.farmersdelight.exception.SlotInvalidRangeException;
-import com.nhoryzon.mc.farmersdelight.util.CompoundTagUtils;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class ItemStackHandler implements ItemHandler {
 
@@ -24,11 +23,7 @@ public class ItemStackHandler implements ItemHandler {
 
     @SuppressWarnings("ConstantConditions")
     public static boolean canItemStacksStack(ItemStack left, ItemStack right) {
-        if (left.isEmpty() || !ItemStack.isSameItem(left, right) || left.hasTag() != right.hasTag()) {
-            return false;
-        }
-
-        return (!left.hasTag() || left.getTag().equals(right.getTag()));
+        return !left.isEmpty() && ItemStack.isSameItemSameComponents(left, right);
     }
 
     public static ItemStack copyStackWithNewSize(ItemStack itemStack, int newSize) {
@@ -205,41 +200,22 @@ public class ItemStackHandler implements ItemHandler {
 
     protected void validateSlotIndex(int slot) {
         if (slot < 0 || slot >= inventory.size())
-            throw new SlotInvalidRangeException(slot, inventory.size());
+            throw new IndexOutOfBoundsException("Slot " + slot + " not in valid range [0," + inventory.size() + ")");
     }
 
     protected int getStackLimit(int slot, ItemStack stack) {
         return Math.min(getMaxCountForSlot(slot), stack.getMaxStackSize());
     }
 
-    public CompoundTag writeNbt(CompoundTag nbtCompound) {
-        ListTag itemListTag = new ListTag();
-        for (int i = 0; i < inventory.size(); i++) {
-            if (!inventory.get(i).isEmpty()) {
-                CompoundTag itemTag = new CompoundTag();
-                itemTag.putInt(CompoundTagUtils.TAG_KEY_SLOT, i);
-                inventory.get(i).save(itemTag);
-                itemListTag.add(itemTag);
-            }
-        }
-
-        nbtCompound.put(CompoundTagUtils.TAG_KEY_ITEM_LIST, itemListTag);
-        nbtCompound.putInt(CompoundTagUtils.TAG_KEY_SIZE, inventory.size());
-
-        return nbtCompound;
+    public void serialize(ValueOutput output) {
+        ContainerHelper.saveAllItems(output, inventory);
     }
 
-    public void readNbt(CompoundTag tag) {
-        setSize(tag.contains(CompoundTagUtils.TAG_KEY_SIZE, CompoundTagUtils.TAG_INT) ? tag.getInt(CompoundTagUtils.TAG_KEY_SIZE) : inventory.size());
-        ListTag itemListTag = tag.getList(CompoundTagUtils.TAG_KEY_ITEM_LIST, CompoundTagUtils.TAG_COMPOUND);
-        for (int i = 0; i < itemListTag.size(); i++) {
-            CompoundTag itemTag = itemListTag.getCompound(i);
-            int slot = itemTag.getInt(CompoundTagUtils.TAG_KEY_SLOT);
-            if (slot >= 0 && slot <= inventory.size()) {
-                inventory.set(slot, ItemStack.of(itemTag));
-            }
+    public void deserialize(ValueInput input) {
+        for (int i = 0; i < inventory.size(); i++) {
+            inventory.set(i, ItemStack.EMPTY);
         }
-
+        ContainerHelper.loadAllItems(input, inventory);
         onInventoryLoaded();
     }
 }

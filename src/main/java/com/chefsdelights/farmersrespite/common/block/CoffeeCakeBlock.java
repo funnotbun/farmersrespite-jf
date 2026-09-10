@@ -2,7 +2,8 @@ package com.chefsdelights.farmersrespite.common.block;
 
 import com.chefsdelights.farmersrespite.core.registry.FREffects;
 import com.chefsdelights.farmersrespite.core.registry.FRItems;
-import com.nhoryzon.mc.farmersdelight.registry.TagsRegistry;
+import vectorwing.farmersdelight.common.tag.CommonTags;
+import vectorwing.farmersdelight.common.tag.ModTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -30,13 +31,12 @@ public class CoffeeCakeBlock extends CakeBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
-        ItemStack stack = player.getItemInHand(handIn);
+    public InteractionResult useItemOn(ItemStack stack, BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         Item item = stack.getItem();
         if (stack.is(ItemTags.CANDLES) && state.getValue(BITES) == 0) {
             Block block = Block.byItem(item);
             if (block instanceof CandleBlock) {
-                if (!player.isCreative()) {
+                if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
 
@@ -48,8 +48,8 @@ public class CoffeeCakeBlock extends CakeBlock {
             }
         }
 
-        if (worldIn.isClientSide) {
-            if (stack.is(TagsRegistry.KNIVES)) {
+        if (worldIn.isClientSide()) {
+            if (stack.is(CommonTags.Items.TOOLS_KNIFE)) {
                 return cutSlice(worldIn, pos, state, player);
             }
             if (eatSlice(worldIn, pos, state, player).consumesAction()) {
@@ -61,7 +61,7 @@ public class CoffeeCakeBlock extends CakeBlock {
             }
         }
 
-        if (stack.is(TagsRegistry.KNIVES)) {
+        if (stack.is(CommonTags.Items.TOOLS_KNIFE)) {
             return cutSlice(worldIn, pos, state, player);
         }
 

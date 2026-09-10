@@ -1,0 +1,16 @@
+{
+  "type": "farmersrespite:brewing",
+  "ingredients": [
+    "farmersrespite:purulent_tea",
+    "minecraft:honey_bottle"
+  ],
+  "result": {
+    "id": "farmersrespite:strong_purulent_tea"
+  },
+  "container": {
+    "id": "minecraft:glass_bottle"
+  },
+  "experience": 0.35,
+  "brewingtime": 2400,
+  "needWater": false
+}

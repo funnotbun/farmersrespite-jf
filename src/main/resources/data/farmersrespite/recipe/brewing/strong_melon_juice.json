@@ -1,0 +1,16 @@
+{
+  "type": "farmersrespite:brewing",
+  "ingredients": [
+    "farmersdelight:melon_juice",
+    "minecraft:honey_bottle"
+  ],
+  "result": {
+    "id": "farmersrespite:strong_melon_juice"
+  },
+  "container": {
+    "id": "minecraft:glass_bottle"
+  },
+  "experience": 0.35,
+  "brewingtime": 2400,
+  "needWater": false
+}

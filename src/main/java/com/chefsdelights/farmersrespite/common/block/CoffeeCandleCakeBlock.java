@@ -5,12 +5,17 @@ import com.chefsdelights.farmersrespite.core.registry.FREffects;
 import com.chefsdelights.farmersrespite.core.registry.FRItems;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.nhoryzon.mc.farmersdelight.registry.TagsRegistry;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import vectorwing.farmersdelight.common.tag.CommonTags;
+import vectorwing.farmersdelight.common.tag.ModTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -22,6 +27,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.AbstractCandleBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -41,6 +47,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.Map;
 
 public class CoffeeCandleCakeBlock extends AbstractCandleBlock {
+    public static final MapCodec<CoffeeCandleCakeBlock> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
+            BuiltInRegistries.BLOCK.byNameCodec().fieldOf("candle").forGetter(block -> block.candle),
+            propertiesCodec()).apply(inst, CoffeeCandleCakeBlock::new));
     public static final BooleanProperty LIT = AbstractCandleBlock.LIT;
     protected static final VoxelShape CAKE_SHAPE = Block.box(1.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D);
     protected static final VoxelShape CANDLE_SHAPE = Block.box(7.0D, 8.0D, 7.0D, 9.0D, 14.0D, 9.0D);
@@ -58,6 +67,11 @@ public class CoffeeCandleCakeBlock extends AbstractCandleBlock {
         BY_CANDLE_AND_CAKE.put(Pair.of(candle, (CoffeeCakeBlock) FRBlocks.COFFEE_CAKE), this);
     }
 
+    @Override
+    protected MapCodec<? extends AbstractCandleBlock> codec() {
+        return CODEC;
+    }
+
     protected Iterable<Vec3> getParticleOffsets(BlockState p_152868_) {
         return PARTICLE_OFFSETS;
     }
@@ -67,14 +81,14 @@ public class CoffeeCandleCakeBlock extends AbstractCandleBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
+    public InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         ItemStack itemstack = player.getItemInHand(hand);
         if (!itemstack.is(Items.FLINT_AND_STEEL) && !itemstack.is(Items.FIRE_CHARGE) && FRBlocks.COFFEE_CAKE instanceof CoffeeCakeBlock cakeBlock) {
-            if (candleHit(result) && player.getItemInHand(hand).isEmpty() && state.getValue(LIT)) {
+            if (candleHit(hit) && player.getItemInHand(hand).isEmpty() && state.getValue(LIT)) {
                 extinguish(player, state, level, pos);
-                return InteractionResult.sidedSuccess(level.isClientSide);
+                return InteractionResult.SUCCESS;
             }
-            if ((itemstack.is(TagsRegistry.KNIVES))) {
+            if ((itemstack.is(CommonTags.Items.TOOLS_KNIFE))) {
                 return cutSlice(level, pos, state, player);
             } else {
                 return eatSlice(level, pos, state, player);
@@ -110,20 +124,20 @@ public class CoffeeCandleCakeBlock extends AbstractCandleBlock {
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean b) {
         return new ItemStack(FRBlocks.COFFEE_CAKE);
     }
 
-    private static boolean candleHit(BlockHitResult result) {
-        return result.getLocation().y - (double) result.getBlockPos().getY() > 0.5D;
+    private static boolean candleHit(BlockHitResult hit) {
+        return hit.getLocation().y - (double) hit.getBlockPos().getY() > 0.5D;
     }
 
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_152905_) {
         p_152905_.add(LIT);
     }
 
-    public BlockState updateShape(BlockState state, Direction direction, BlockState p_152900_, LevelAccessor p_152901_, BlockPos p_152902_, BlockPos p_152903_) {
-        return direction == Direction.DOWN && !state.canSurvive(p_152901_, p_152902_) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, direction, p_152900_, p_152901_, p_152902_, p_152903_);
+    public BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess tickAccess, BlockPos pos, Direction direction, BlockPos p_152902_, BlockState p_152900_, RandomSource random) {
+        return direction == Direction.DOWN && !state.canSurvive(level, pos) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, level, tickAccess, pos, direction, p_152902_, p_152900_, random);
     }
 
     public boolean canSurvive(BlockState p_152891_, LevelReader p_152892_, BlockPos p_152893_) {

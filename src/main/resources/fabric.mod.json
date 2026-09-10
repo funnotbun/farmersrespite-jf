@@ -31,11 +31,8 @@
     "client": [
       "com.chefsdelights.farmersrespite.client.FRClientSetup"
     ],
-    "rei_client": [
-      "com.chefsdelights.farmersrespite.integration.rei.REIPlugin"
-    ],
-    "emi": [
-      "com.chefsdelights.farmersrespite.integration.emi.EMIPlugin"
+    "jei_mod_plugin": [
+      "com.chefsdelights.farmersrespite.integration.jei.FarmersRespiteJEIPlugin"
     ]
   },
   "mixins": [
@@ -44,11 +41,12 @@
   "accessWidener": "farmersrespite.accesswidener",
 
   "depends": {
-    "fabricloader": ">=0.14.9",
-    "fabric": "*",
-    "minecraft": ">=1.20.1",
-    "java": ">=17",
-    "forgeconfigapiport": "*"
+    "fabricloader": ">=0.19.3",
+    "minecraft": ">=26.2 <=26.2",
+    "java": ">=25",
+    "fabric-api": ">=0.155.0",
+    "farmersdelight": ">=26.2-3.6.6",
+    "cloth-config": ">=26.2.155"
   },
 
   "custom": {

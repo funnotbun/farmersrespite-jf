@@ -1,0 +1,16 @@
+{
+  "type": "farmersrespite:brewing",
+  "ingredients": [
+    "farmersdelight:apple_cider",
+    "#c:milk"
+  ],
+  "result": {
+    "id": "farmersrespite:long_apple_cider"
+  },
+  "container": {
+    "id": "minecraft:glass_bottle"
+  },
+  "experience": 0.35,
+  "brewingtime": 2400,
+  "needWater": false
+}

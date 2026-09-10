@@ -1,0 +1,13 @@
+{
+  "type": "farmersrespite:brewing",
+  "ingredients": [
+    "#c:crops/coffee_beans",
+    "#c:crops/coffee_beans"
+  ],
+  "result": {
+    "id": "farmersrespite:coffee"
+  },
+  "experience": 0.35,
+  "brewingtime": 100,
+  "needWater": true
+}

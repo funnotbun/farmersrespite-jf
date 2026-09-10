@@ -1,0 +1,16 @@
+{
+  "type": "farmersrespite:brewing",
+  "ingredients": [
+    "farmersrespite:dandelion_tea",
+    "#c:milk"
+  ],
+  "result": {
+    "id": "farmersrespite:long_dandelion_tea"
+  },
+  "container": {
+    "id": "minecraft:glass_bottle"
+  },
+  "experience": 0.35,
+  "brewingtime": 2400,
+  "needWater": false
+}

@@ -1,0 +1,16 @@
+{
+  "type": "farmersdelight:cooking",
+  "ingredients": [
+    "minecraft:blaze_powder",
+    "minecraft:blaze_powder",
+    "minecraft:nether_wart",
+    "minecraft:nether_wart",
+    "#c:crops/coffee_beans",
+    "minecraft:beef"
+  ],
+  "result": {
+    "id": "farmersrespite:blazing_chili"
+  },
+  "experience": 0.35,
+  "cookingtime": 200
+}

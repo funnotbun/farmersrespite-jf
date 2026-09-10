@@ -1,7 +1,6 @@
 package com.chefsdelights.farmersrespite.common.block.entity.inventory;
 
 import com.chefsdelights.farmersrespite.common.block.entity.KettleBlockEntity;
-import com.nhoryzon.mc.farmersdelight.entity.block.CookingPotBlockEntity;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -50,11 +49,11 @@ public class KettlePotInventory extends ItemStackHandler {
     }
 
     protected void onInventorySlotChanged(int slot) {
-        if (slot >= 0 && slot < CookingPotBlockEntity.MEAL_DISPLAY_SLOT) {
+        if (slot >= 0 && slot < KettleBlockEntity.MEAL_DISPLAY_SLOT) {
             this.kettleBlockEntity.setCheckNewRecipe(true);
         }
 
-        this.kettleBlockEntity.inventoryChanged();
+        this.kettleBlockEntity.onInventoryChanged();
     }
 }
 

@@ -1,0 +1,16 @@
+{
+  "type": "farmersdelight:cooking",
+  "ingredients": [
+    "#c:crops/yellow_tea_leaves",
+    "#c:crops/yellow_tea_leaves",
+    "minecraft:chicken",
+    "#c:crops/cabbage",
+    "#c:crops/onion",
+    "#c:crops/rice"
+  ],
+  "result": {
+    "id": "farmersrespite:tea_curry"
+  },
+  "experience": 0.35,
+  "cookingtime": 200
+}

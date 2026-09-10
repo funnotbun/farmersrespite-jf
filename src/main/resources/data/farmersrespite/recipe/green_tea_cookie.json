@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "wgw"
+  ],
+  "key": {
+    "w": "minecraft:wheat",
+    "g": "#c:crops/green_tea_leaves"
+  },
+  "result": {
+    "id": "farmersrespite:green_tea_cookie",
+    "count": 8
+  }
+}

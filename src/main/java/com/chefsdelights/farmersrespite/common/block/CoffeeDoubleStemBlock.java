@@ -21,7 +21,7 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -32,7 +32,7 @@ public class CoffeeDoubleStemBlock extends BushBlock implements BonemealableBloc
 
     public static final IntegerProperty AGE = BlockStateProperties.AGE_2;
     public static final IntegerProperty AGE1 = IntegerProperty.create("age1", 0, 2);
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
 
     public CoffeeDoubleStemBlock(Properties properties) {
@@ -56,7 +56,7 @@ public class CoffeeDoubleStemBlock extends BushBlock implements BonemealableBloc
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean b) {
         return new ItemStack(FRItems.COFFEE_BEANS);
     }
 
@@ -87,7 +87,7 @@ public class CoffeeDoubleStemBlock extends BushBlock implements BonemealableBloc
                     } else if (rand == 1 && i < 2) {
                         level.setBlockAndUpdate(pos, state.setValue(AGE, i + 1));
                     }
-                } else if (level.dimensionType().ultraWarm()) {
+                } else if (level.dimension() == Level.NETHER) {
                     if (rand == 0) {
                         if (i < 2) {
                             level.setBlockAndUpdate(pos, state.setValue(AGE, i + 1));
@@ -106,11 +106,11 @@ public class CoffeeDoubleStemBlock extends BushBlock implements BonemealableBloc
 
     @Override
     @SuppressWarnings("deprecation")
-    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult result) {
+    public InteractionResult useItemOn(ItemStack stack, BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         int i = state.getValue(AGE);
         int j = state.getValue(AGE1);
         boolean flag = (i == 2 || j == 2);
-        if (!flag && player.getItemInHand(handIn).getItem() == Items.BONE_MEAL) {
+        if (!flag && player.getItemInHand(hand).getItem() == Items.BONE_MEAL) {
             return InteractionResult.PASS;
         } else if (flag) {
             if (i == 2) {
@@ -120,15 +120,15 @@ public class CoffeeDoubleStemBlock extends BushBlock implements BonemealableBloc
                 world.setBlock(pos, state.setValue(AGE1, 0), 2);
             }
             popResource(world, pos, new ItemStack(FRItems.COFFEE_BERRIES, 1));
-            world.playSound(player, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
-            return InteractionResult.sidedSuccess(world.isClientSide);
+            world.playSound(player, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + world.getRandom().nextFloat() * 0.4F);
+            return InteractionResult.SUCCESS;
         } else {
-            return super.use(state, world, pos, player, handIn, result);
+            return super.useItemOn(stack, state, world, pos, player, hand, hit);
         }
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state, boolean isClient) {
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
         int i = state.getValue(AGE);
         int j = state.getValue(AGE1);
         return !(i == 2 && j == 2);

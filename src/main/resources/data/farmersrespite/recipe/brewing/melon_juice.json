@@ -1,0 +1,13 @@
+{
+  "type": "farmersrespite:brewing",
+  "ingredients": [
+    "minecraft:melon_slice",
+    "minecraft:sugar"
+  ],
+  "result": {
+    "id": "farmersdelight:melon_juice"
+  },
+  "experience": 0.35,
+  "brewingtime": 2400,
+  "needWater": true
+}

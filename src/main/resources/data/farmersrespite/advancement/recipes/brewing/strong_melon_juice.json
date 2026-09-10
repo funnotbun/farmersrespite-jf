@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_farmersdelight_melon_juice": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "farmersdelight:melon_juice"
+          },
+          {
+            "items": "minecraft:honey_bottle"
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "farmersrespite:brewing/strong_melon_juice"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_farmersdelight_melon_juice"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "farmersrespite:brewing/strong_melon_juice"
+    ]
+  }
+}

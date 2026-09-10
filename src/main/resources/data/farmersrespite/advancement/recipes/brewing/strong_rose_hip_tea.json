@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_farmersrespite_rose_hip_tea": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "farmersrespite:rose_hip_tea"
+          },
+          {
+            "items": "minecraft:honey_bottle"
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "farmersrespite:brewing/strong_rose_hip_tea"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_farmersrespite_rose_hip_tea"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "farmersrespite:brewing/strong_rose_hip_tea"
+    ]
+  }
+}

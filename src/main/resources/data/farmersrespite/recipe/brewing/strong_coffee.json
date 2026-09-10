@@ -1,0 +1,16 @@
+{
+  "type": "farmersrespite:brewing",
+  "ingredients": [
+    "farmersrespite:coffee",
+    "minecraft:honey_bottle"
+  ],
+  "result": {
+    "id": "farmersrespite:strong_coffee"
+  },
+  "container": {
+    "id": "minecraft:glass_bottle"
+  },
+  "experience": 0.35,
+  "brewingtime": 2400,
+  "needWater": false
+}

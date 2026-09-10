@@ -20,7 +20,7 @@ public class WildTeaBushFeature extends Feature<SimpleBlockConfiguration> {
         WorldGenLevel level = context.level();
         BlockState blockstate = FRBlocks.WILD_TEA_BUSH.defaultBlockState();
         BlockPos pos = context.origin();
-        BlockState state = config.toPlace().getState(context.random(), pos);
+        BlockState state = config.toPlace().getState(level, context.random(), pos);
         if (state.canSurvive(level, pos)) {
             level.setBlock(pos, blockstate, 19);
             return true;

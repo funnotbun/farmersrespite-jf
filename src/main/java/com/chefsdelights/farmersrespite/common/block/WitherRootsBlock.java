@@ -12,12 +12,14 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.AreaEffectCloud;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -50,24 +52,26 @@ public class WitherRootsBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor world, BlockPos pos, BlockPos facingPos) {
-        if (!state.canSurvive(world, pos)) {
-            AreaEffectCloud cloud = new AreaEffectCloud((Level) world, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
-            cloud.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 0));
-            cloud.setDuration(600);
-            cloud.setRadius(0.5F);
-            cloud.setRadiusOnUse(-0.5F);
-            world.addFreshEntity(cloud);
+    protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess tickAccess, BlockPos pos, Direction facing, BlockPos facingPos, BlockState facingState, RandomSource random) {
+        if (!state.canSurvive(level, pos)) {
+            if (level instanceof Level realLevel) {
+                AreaEffectCloud cloud = new AreaEffectCloud(realLevel, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
+                cloud.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 0));
+                cloud.setDuration(600);
+                cloud.setRadius(0.5F);
+                cloud.setRadiusOnUse(-0.5F);
+                realLevel.addFreshEntity(cloud);
+            }
             return Blocks.AIR.defaultBlockState();
         }
-        return super.updateShape(state, facing, facingState, world, pos, facingPos);
+        return super.updateShape(state, level, tickAccess, pos, facing, facingPos, facingState, random);
     }
 
     @Override
-    public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean bl) {
         if (entity instanceof LivingEntity) {
             entity.makeStuckInBlock(state, new Vec3(0.8F, 0.75D, 0.8F));
-            if (!level.isClientSide && (entity.xOld != entity.getX() || entity.zOld != entity.getZ())) {
+            if (!level.isClientSide() && (entity.xOld != entity.getX() || entity.zOld != entity.getZ())) {
                 double d0 = Math.abs(entity.getX() - entity.xOld);
                 double d1 = Math.abs(entity.getZ() - entity.zOld);
                 if (d0 >= 0.003F || d1 >= 0.003F) {
@@ -79,8 +83,8 @@ public class WitherRootsBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (!level.isClientSide) {
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide()) {
             AreaEffectCloud cloud = new AreaEffectCloud(level, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
             cloud.addEffect(new MobEffectInstance(MobEffects.WITHER, 200, 0));
             cloud.setDuration(600);
@@ -89,11 +93,11 @@ public class WitherRootsBlock extends BushBlock implements BonemealableBlock {
             cloud.setOwner(player);
             level.addFreshEntity(cloud);
         }
-        super.playerWillDestroy(level, pos, state, player);
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_50897_, BlockPos p_50898_, BlockState p_50899_, boolean p_50900_) {
+    public boolean isValidBonemealTarget(LevelReader p_50897_, BlockPos p_50898_, BlockState p_50899_) {
         return false;
     }
 

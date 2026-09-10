@@ -1,76 +1,83 @@
 package com.chefsdelights.farmersrespite.common.crafting;
 
+import com.chefsdelights.farmersrespite.client.recipe.KettleRecipeDisplay;
+import com.chefsdelights.farmersrespite.common.block.entity.inventory.RecipeWrapper;
 import com.chefsdelights.farmersrespite.core.FarmersRespite;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.nhoryzon.mc.farmersdelight.recipe.CookingPotRecipe;
-import com.nhoryzon.mc.farmersdelight.util.RecipeMatcher;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.world.Container;
+import com.chefsdelights.farmersrespite.core.registry.FRItems;
+import com.chefsdelights.farmersrespite.core.registry.FRRecipeBookCategories;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.display.RecipeDisplay;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.Nullable;
 
-public class KettleRecipe implements Recipe<Container> {
-    public static RecipeType<KettleRecipe> TYPE = RecipeType.register(FarmersRespite.MOD_ID + ":brewing");
-    public static final RecipeSerializer<KettleRecipe> SERIALIZER = new Serializer();
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+public class KettleRecipe implements Recipe<RecipeWrapper> {
+    public static final RecipeType<KettleRecipe> TYPE = Registry.register(BuiltInRegistries.RECIPE_TYPE, FarmersRespite.id("brewing"), new RecipeType<>() {
+    });
     public static final int INPUT_SLOTS = 2;
 
-    private final ResourceLocation id;
+    private static final MapCodec<KettleRecipe> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
+            Codec.STRING.optionalFieldOf("group", "").forGetter(recipe -> recipe.group),
+            Ingredient.CODEC.listOf(1, INPUT_SLOTS).fieldOf("ingredients").forGetter(recipe -> recipe.inputItems),
+            ItemStackTemplate.CODEC.fieldOf("result").forGetter(recipe -> recipe.resultTemplate),
+            ItemStackTemplate.CODEC.optionalFieldOf("container").forGetter(recipe -> recipe.containerOverride),
+            Codec.FLOAT.optionalFieldOf("experience", 0.0F).forGetter(recipe -> recipe.experience),
+            Codec.INT.optionalFieldOf("brewingtime", 2400).forGetter(recipe -> recipe.brewTime),
+            Codec.BOOL.optionalFieldOf("needWater", true).forGetter(recipe -> recipe.needWater)
+    ).apply(inst, KettleRecipe::new));
+    private static final StreamCodec<RegistryFriendlyByteBuf, KettleRecipe> STREAM_CODEC = StreamCodec.of(KettleRecipe::toNetwork, KettleRecipe::fromNetwork);
+    public static final RecipeSerializer<KettleRecipe> SERIALIZER = new RecipeSerializer<>(CODEC, STREAM_CODEC);
+
     private final String group;
-    private final NonNullList<Ingredient> inputItems;
-    private final ItemStack output;
-    public final ItemStack container;
+    private final List<Ingredient> inputItems;
+    private final ItemStackTemplate resultTemplate;
+    private final Optional<ItemStackTemplate> containerOverride;
     private final float experience;
     public final int brewTime;
     private final boolean needWater;
 
-    public KettleRecipe(ResourceLocation id, String group, NonNullList<Ingredient> inputItems, ItemStack output, ItemStack container, float experience, int brewTime, boolean needWater) {
-        this.id = id;
+    private KettleRecipe(String group, List<Ingredient> inputItems, ItemStackTemplate result, Optional<ItemStackTemplate> container, float experience, int brewTime, boolean needWater) {
         this.group = group;
-        this.inputItems = inputItems;
-        this.output = output;
-
-        if (!container.isEmpty()) {
-            this.container = container;
-        } else if (output.getItem().getCraftingRemainingItem() != null) {
-            this.container = new ItemStack(output.getItem().getCraftingRemainingItem());
-        } else {
-            this.container = ItemStack.EMPTY;
-        }
-
+        this.inputItems = List.copyOf(inputItems);
+        this.resultTemplate = result;
+        this.containerOverride = container;
         this.experience = experience;
         this.brewTime = brewTime;
         this.needWater = needWater;
-
     }
 
-    @Override
-    public ResourceLocation getId() {
-        return this.id;
-    }
-
-    @Override
-    public String getGroup() {
-        return this.group;
-    }
-
-    @Override
-    public NonNullList<Ingredient> getIngredients() {
+    public List<Ingredient> input() {
         return this.inputItems;
     }
 
+    public ItemStack result() {
+        return this.resultTemplate.create();
+    }
+
     public ItemStack getOutputContainer() {
-        return this.container;
+        if (this.containerOverride.isPresent()) {
+            return this.containerOverride.get().create();
+        }
+        ItemStackTemplate remainder = result().getCraftingRemainder();
+        return remainder != null ? remainder.create() : ItemStack.EMPTY;
     }
 
     public float getExperience() {
@@ -86,125 +93,95 @@ public class KettleRecipe implements Recipe<Container> {
     }
 
     @Override
-    public boolean matches(Container inv, Level worldIn) {
-        java.util.List<ItemStack> inputs = new java.util.ArrayList<>();
-        int i = 0;
-
+    public boolean matches(RecipeWrapper inv, Level level) {
+        List<ItemStack> inputs = new ArrayList<>();
         for (int j = 0; j < INPUT_SLOTS; ++j) {
             ItemStack itemstack = inv.getItem(j);
             if (!itemstack.isEmpty()) {
-                ++i;
                 inputs.add(itemstack);
             }
         }
-        return i == this.inputItems.size() && RecipeMatcher.findMatches(inputs, this.inputItems) != null;
-    }
-
-    @Override
-    public ItemStack assemble(Container container, RegistryAccess registryAccess) {
-        return this.output.copy();
-    }
-
-    @Override
-    public boolean canCraftInDimensions(int width, int height) {
-        return width * height >= this.inputItems.size();
-    }
-
-    @Override
-    public ItemStack getResultItem(RegistryAccess registryAccess) {
-        return this.output;
-    }
-
-    @Override
-    public RecipeSerializer<?> getSerializer() {
-        return KettleRecipe.SERIALIZER;
-    }
-
-    @Override
-    public boolean isSpecial() {
+        if (inputs.size() != this.inputItems.size()) {
+            return false;
+        }
+        boolean[] used = new boolean[inputs.size()];
+        outer:
+        for (Ingredient ingredient : this.inputItems) {
+            for (int i = 0; i < inputs.size(); ++i) {
+                if (!used[i] && ingredient.test(inputs.get(i))) {
+                    used[i] = true;
+                    continue outer;
+                }
+            }
+            return false;
+        }
         return true;
     }
 
     @Override
-    public RecipeType<?> getType() {
+    public ItemStack assemble(RecipeWrapper input) {
+        return result();
+    }
+
+    @Override
+    public boolean showNotification() {
+        return true;
+    }
+
+    @Override
+    public String group() {
+        return this.group;
+    }
+
+    @Override
+    public RecipeSerializer<KettleRecipe> getSerializer() {
+        return KettleRecipe.SERIALIZER;
+    }
+
+    @Override
+    public RecipeType<KettleRecipe> getType() {
         return KettleRecipe.TYPE;
     }
 
-    private static class Serializer implements RecipeSerializer<KettleRecipe> {
-        Serializer() {
-        }
+    @Override
+    public PlacementInfo placementInfo() {
+        return PlacementInfo.create(this.inputItems);
+    }
 
-        @Override
-        public KettleRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
-            final String groupIn = GsonHelper.getAsString(json, "group", "");
-            final NonNullList<Ingredient> inputItemsIn = readIngredients(GsonHelper.getAsJsonArray(json, "ingredients"));
-            if (inputItemsIn.isEmpty()) {
-                throw new JsonParseException("No ingredients for brewing recipe");
-            } else if (inputItemsIn.size() > KettleRecipe.INPUT_SLOTS) {
-                throw new JsonParseException("Too many ingredients for brewing recipe! The max is " + KettleRecipe.INPUT_SLOTS);
-            } else {
-                JsonObject jsonResult = GsonHelper.getAsJsonObject(json, "result");
-                ItemStack outputIn = new ItemStack(GsonHelper.getAsItem(jsonResult, "item"), GsonHelper.getAsInt(jsonResult, "count", 1));
+    @Override
+    public List<RecipeDisplay> display() {
+        return List.of(new KettleRecipeDisplay(
+                this.inputItems.stream().map(Ingredient::display).toList(),
+                this.containerOverride.map(template -> (SlotDisplay) new SlotDisplay.ItemStackSlotDisplay(template)),
+                new SlotDisplay.ItemStackSlotDisplay(this.resultTemplate),
+                new SlotDisplay.ItemSlotDisplay(FRItems.KETTLE),
+                this.brewTime,
+                this.experience));
+    }
 
-                ItemStack container = ItemStack.EMPTY;
-                if (GsonHelper.isValidNode(json, "container")) {
-                    JsonObject jsonContainer = GsonHelper.getAsJsonObject(json, "container");
-                    container = new ItemStack(GsonHelper.getAsItem(jsonContainer, "item"), GsonHelper.getAsInt(jsonContainer, "count", 1));
-                }
+    @Override
+    public RecipeBookCategory recipeBookCategory() {
+        return FRRecipeBookCategories.KETTLE_DRINKS;
+    }
 
-                final float experienceIn = GsonHelper.getAsFloat(json, "experience", 0.0F);
-                final int brewTimeIn = GsonHelper.getAsInt(json, "brewingtime", 2400);
-                final boolean needWaterIn = GsonHelper.getAsBoolean(json, "needWater", true);
-                return new KettleRecipe(recipeId, groupIn, inputItemsIn, outputIn, container, experienceIn, brewTimeIn, needWaterIn);
-            }
-        }
+    private static KettleRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
+        String group = buf.readUtf();
+        List<Ingredient> inputItems = Ingredient.CONTENTS_STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buf);
+        ItemStackTemplate result = ItemStackTemplate.STREAM_CODEC.decode(buf);
+        Optional<ItemStackTemplate> container = ByteBufCodecs.optional(ItemStackTemplate.STREAM_CODEC).decode(buf);
+        float experience = buf.readFloat();
+        int brewTime = buf.readVarInt();
+        boolean needWater = buf.readBoolean();
+        return new KettleRecipe(group, inputItems, result, container, experience, brewTime, needWater);
+    }
 
-        private static NonNullList<Ingredient> readIngredients(JsonArray ingredientArray) {
-            NonNullList<Ingredient> nonnulllist = NonNullList.create();
-
-            for (int i = 0; i < ingredientArray.size(); ++i) {
-                Ingredient ingredient = Ingredient.fromJson(ingredientArray.get(i));
-                if (!ingredient.isEmpty()) {
-                    nonnulllist.add(ingredient);
-                }
-            }
-
-            return nonnulllist;
-        }
-
-        @Nullable
-        @Override
-        public KettleRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer) {
-            String groupIn = buffer.readUtf(32767);
-            int i = buffer.readVarInt();
-            NonNullList<Ingredient> inputItemsIn = NonNullList.withSize(i, Ingredient.EMPTY);
-
-            for (int j = 0; j < inputItemsIn.size(); ++j) {
-                inputItemsIn.set(j, Ingredient.fromNetwork(buffer));
-            }
-
-            ItemStack outputIn = buffer.readItem();
-            ItemStack container = buffer.readItem();
-            float experienceIn = buffer.readFloat();
-            int brewTimeIn = buffer.readVarInt();
-            Boolean needWaterIn = buffer.readBoolean();
-            return new KettleRecipe(recipeId, groupIn, inputItemsIn, outputIn, container, experienceIn, brewTimeIn, needWaterIn);
-        }
-
-        @Override
-        public void toNetwork(FriendlyByteBuf buffer, KettleRecipe recipe) {
-            buffer.writeUtf(recipe.group);
-            buffer.writeVarInt(recipe.inputItems.size());
-
-            for (Ingredient ingredient : recipe.inputItems) {
-                ingredient.toNetwork(buffer);
-            }
-
-            buffer.writeItem(recipe.output);
-            buffer.writeItem(recipe.container);
-            buffer.writeFloat(recipe.experience);
-            buffer.writeVarInt(recipe.brewTime);
-            buffer.writeBoolean(recipe.needWater);
-        }
+    private static void toNetwork(RegistryFriendlyByteBuf buf, KettleRecipe recipe) {
+        buf.writeUtf(recipe.group);
+        Ingredient.CONTENTS_STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buf, recipe.inputItems);
+        ItemStackTemplate.STREAM_CODEC.encode(buf, recipe.resultTemplate);
+        ByteBufCodecs.optional(ItemStackTemplate.STREAM_CODEC).encode(buf, recipe.containerOverride);
+        buf.writeFloat(recipe.experience);
+        buf.writeVarInt(recipe.brewTime);
+        buf.writeBoolean(recipe.needWater);
     }
 }

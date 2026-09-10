@@ -1,25 +1,20 @@
 package com.chefsdelights.farmersrespite.core;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.ConfigData;
+import me.shedaniel.autoconfig.annotation.Config;
+import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 
-public class FRConfiguration {
-    public static ForgeConfigSpec COMMON_CONFIG;
+@Config(name = FarmersRespite.MOD_ID)
+public class FRConfiguration implements ConfigData {
+    public boolean enableBoneMealTeaBush = true;
+    public boolean enableBoneMealCoffeeBush = true;
 
-    // COMMON
-    public static final String CATEGORY_SETTINGS = "settings";
-    public static ForgeConfigSpec.BooleanValue BONE_MEAL_TEA;
-    public static ForgeConfigSpec.BooleanValue BONE_MEAL_COFFEE;
+    public static FRConfiguration get() {
+        return AutoConfig.getConfigHolder(FRConfiguration.class).getConfig();
+    }
 
-    static {
-        ForgeConfigSpec.Builder COMMON_BUILDER = new ForgeConfigSpec.Builder();
-
-        COMMON_BUILDER.comment("Game settings").push(CATEGORY_SETTINGS);
-        BONE_MEAL_TEA = COMMON_BUILDER.comment("Are tea bushes bonemealable?")
-                .define("enableBoneMealTeaBush", false);
-        BONE_MEAL_COFFEE = COMMON_BUILDER.comment("Are coffee bushes bonemealable?")
-                .define("enableBoneMealCoffeeBush", false);
-
-        COMMON_CONFIG = COMMON_BUILDER.build();
-
+    public static void register() {
+        AutoConfig.register(FRConfiguration.class, GsonConfigSerializer::new);
     }
 }

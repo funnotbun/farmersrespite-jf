@@ -2,14 +2,14 @@ package com.chefsdelights.farmersrespite.core.event;
 
 import com.chefsdelights.farmersrespite.common.loot.function.FRCopyMealFunction;
 import com.chefsdelights.farmersrespite.core.registry.FRItems;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.ComposterBlock;
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctions;
 
 public class FRCommonSetup {
     public static void init() {
         registerCompostables();
-        LootItemFunctions.register(FRCopyMealFunction.ID.toString(), new FRCopyMealFunction.Serializer());
-
+        Registry.register(BuiltInRegistries.LOOT_FUNCTION_TYPE, FRCopyMealFunction.ID, FRCopyMealFunction.CODEC);
     }
 
     public static void registerCompostables() {

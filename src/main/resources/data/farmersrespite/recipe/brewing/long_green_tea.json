@@ -1,0 +1,16 @@
+{
+  "type": "farmersrespite:brewing",
+  "ingredients": [
+    "farmersrespite:green_tea",
+    "#c:milk"
+  ],
+  "result": {
+    "id": "farmersrespite:long_green_tea"
+  },
+  "container": {
+    "id": "minecraft:glass_bottle"
+  },
+  "experience": 0.35,
+  "brewingtime": 100,
+  "needWater": false
+}

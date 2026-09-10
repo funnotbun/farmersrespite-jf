@@ -21,6 +21,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.BonemealableBlock;
@@ -63,7 +64,7 @@ public class TeaBushBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean b) {
         return new ItemStack(FRItems.TEA_SEEDS);
     }
 
@@ -73,12 +74,12 @@ public class TeaBushBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor world, BlockPos pos, BlockPos facingPos) {
+    protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess tickAccess, BlockPos pos, Direction facing, BlockPos facingPos, BlockState facingState, RandomSource random) {
         DoubleBlockHalf doubleblockhalf = state.getValue(HALF);
         if (facing.getAxis() == Direction.Axis.Y && doubleblockhalf == DoubleBlockHalf.LOWER == (facing == Direction.UP)) {
             return facingState.is(this) && facingState.getValue(HALF) != doubleblockhalf ? state.setValue(AGE, facingState.getValue(AGE)) : Blocks.AIR.defaultBlockState();
         } else {
-            return doubleblockhalf == DoubleBlockHalf.LOWER && facing == Direction.DOWN && !state.canSurvive(world, pos) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, facing, facingState, world, pos, facingPos);
+            return doubleblockhalf == DoubleBlockHalf.LOWER && facing == Direction.DOWN && !state.canSurvive(level, pos) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, level, tickAccess, pos, facing, facingPos, facingState, random);
         }
     }
 
@@ -90,19 +91,19 @@ public class TeaBushBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public void playerWillDestroy(Level pLevel, BlockPos pPos, BlockState pState, Player pPlayer) {
-        if (!pLevel.isClientSide && pPlayer.isCreative()) {
+    public BlockState playerWillDestroy(Level pLevel, BlockPos pPos, BlockState pState, Player pPlayer) {
+        if (!pLevel.isClientSide() && pPlayer.getAbilities().instabuild) {
             preventCreativeDropFromBottomPart(pLevel, pPos, pState, pPlayer);
         }
 
-        super.playerWillDestroy(pLevel, pPos, pState, pPlayer);
+        return super.playerWillDestroy(pLevel, pPos, pState, pPlayer);
     }
 
     @Override
     @Nullable
     public BlockState getStateForPlacement(BlockPlaceContext pContext) {
         BlockPos blockpos = pContext.getClickedPos();
-        if (blockpos.getY() < 255 && pContext.getLevel().getBlockState(blockpos.above()).canBeReplaced(pContext)) {
+        if (pContext.getLevel().isInsideBuildHeight(blockpos.above()) && pContext.getLevel().getBlockState(blockpos.above()).canBeReplaced(pContext)) {
             return this.defaultBlockState().setValue(AGE, Integer.valueOf(0)).setValue(HALF, DoubleBlockHalf.LOWER);
         } else {
             return null;
@@ -135,15 +136,15 @@ public class TeaBushBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult result) {
+    public InteractionResult useItemOn(ItemStack stack, BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         int i = state.getValue(AGE);
-        ItemStack heldStack = player.getItemInHand(handIn);
+        ItemStack heldStack = player.getItemInHand(hand);
         Item item = heldStack.getItem();
 
         if (item == Items.SHEARS) {
-            int j = world.random.nextInt(2);
-            int k = 2 + world.random.nextInt(2);
-            int l = world.random.nextInt(2);
+            int j = world.getRandom().nextInt(2);
+            int k = 2 + world.getRandom().nextInt(2);
+            int l = world.getRandom().nextInt(2);
 
             if (i == 0) {
                 popResource(world, pos, new ItemStack(FRItems.GREEN_TEA_LEAVES, 2 + j));
@@ -164,22 +165,20 @@ public class TeaBushBlock extends BushBlock implements BonemealableBlock {
             if (state.getValue(HALF) == DoubleBlockHalf.UPPER) {
                 world.setBlockAndUpdate(pos.below(), FRBlocks.SMALL_TEA_BUSH.defaultBlockState());
             }
-            world.playSound(player, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
+            world.playSound(player, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + world.getRandom().nextFloat() * 0.4F);
             popResource(world, pos, new ItemStack(Items.STICK, k));
-            heldStack.hurtAndBreak(1, player, (p_226874_1_) -> {
-                player.broadcastBreakEvent(handIn);
-            });
-            return InteractionResult.sidedSuccess(world.isClientSide);
+            heldStack.hurtAndBreak(1, player, hand);
+            return InteractionResult.SUCCESS;
         } else {
-            return super.use(state, world, pos, player, handIn, result);
+            return super.useItemOn(stack, state, world, pos, player, hand, hit);
         }
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, boolean isClient) {
+    public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state) {
         int i = state.getValue(AGE);
         if (i != 3) {
-            return FRConfiguration.BONE_MEAL_TEA.get();
+            return FRConfiguration.get().enableBoneMealTeaBush;
         }
         return false;
     }

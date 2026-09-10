@@ -3,8 +3,8 @@
 	"texture_size": [64, 64],
 	"textures": {
 		"0": "farmersrespite:block/kettle",
-		"1": "farmersdelight:block/cooking_pot_tray_top",
-		"2": "farmersdelight:block/cooking_pot_tray_side",
+		"1": "farmersdelight:block/heating_tray_top",
+		"2": "farmersdelight:block/heating_tray_side",
 		"particle": "farmersrespite:block/kettle"
 	},
 	"elements": [

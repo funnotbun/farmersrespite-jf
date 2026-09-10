@@ -1,0 +1,15 @@
+{
+  "type": "farmersdelight:cutting",
+  "ingredients": [
+    "farmersrespite:coffee_cake"
+  ],
+  "tool": "#c:tools/knife",
+  "result": [
+    {
+      "item": {
+        "id": "farmersrespite:coffee_cake_slice",
+        "count": 7
+      }
+    }
+  ]
+}

@@ -4,21 +4,18 @@ import com.chefsdelights.farmersrespite.common.block.entity.KettleBlockEntity;
 import com.chefsdelights.farmersrespite.common.block.entity.inventory.ItemHandler;
 import com.chefsdelights.farmersrespite.core.registry.FRBlockEntityTypes;
 import com.chefsdelights.farmersrespite.core.registry.FRSounds;
-import com.chefsdelights.farmersrespite.core.utility.FRTextUtils;
 import com.chefsdelights.farmersrespite.core.utility.MathUtils;
-import com.nhoryzon.mc.farmersdelight.block.CookingPotBlock;
-import com.nhoryzon.mc.farmersdelight.block.state.CookingPotSupport;
-import com.nhoryzon.mc.farmersdelight.registry.TagsRegistry;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -29,35 +26,37 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
+import vectorwing.farmersdelight.common.block.state.CookingPotSupport;
+import vectorwing.farmersdelight.common.tag.ModTags;
 
 @SuppressWarnings("deprecation")
 public class KettleBlock extends BaseEntityBlock implements SimpleWaterloggedBlock {
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final MapCodec<KettleBlock> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(propertiesCodec()).apply(inst, KettleBlock::new));
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<CookingPotSupport> SUPPORT = EnumProperty.create("support", CookingPotSupport.class);
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     public static final IntegerProperty WATER_LEVEL = IntegerProperty.create("water", 0, 3);
@@ -66,20 +65,21 @@ public class KettleBlock extends BaseEntityBlock implements SimpleWaterloggedBlo
     protected static final VoxelShape SHAPE = Block.box(3.0D, 0.0D, 3.0D, 13.0D, 7.0D, 13.0D);
     protected static final VoxelShape SHAPE_WITH_TRAY = Shapes.or(SHAPE, Block.box(0.0D, -1.0D, 0.0D, 16.0D, 0.0D, 16.0D));
 
-    public KettleBlock() {
-        super(FabricBlockSettings.create().mapColor(MapColor.METAL)
-                .strength(0.5F, 6.0F)
-                .sound(SoundType.LANTERN));
+    public KettleBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(SUPPORT, CookingPotSupport.NONE).setValue(WATERLOGGED, false).setValue(WATER_LEVEL, 0).setValue(LID, true));
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult result) {
-        ItemStack heldStack = player.getItemInHand(handIn);
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
+    @Override
+    public InteractionResult useItemOn(ItemStack heldStack, BlockState state, Level world, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult result) {
         Item item = heldStack.getItem();
-        BlockEntity tileEntity = world.getBlockEntity(pos);
         int i = state.getValue(WATER_LEVEL);
-        if (!world.isClientSide) {
+        if (!world.isClientSide() && player instanceof ServerPlayer) {
             if (heldStack.isEmpty() && player.isShiftKeyDown()) {
                 if (state.getValue(LID)) {
                     world.setBlockAndUpdate(pos, state.setValue(LID, false));
@@ -102,29 +102,31 @@ public class KettleBlock extends BaseEntityBlock implements SimpleWaterloggedBlo
                     world.setBlockAndUpdate(pos, state.setValue(WATER_LEVEL, i + 1));
                 }
                 world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BUCKET_EMPTY, SoundSource.NEUTRAL, 1.0F, 1.0F);
-            } else if (i < 3 && item == Items.POTION && PotionUtils.getPotion(heldStack) == Potions.WATER) {
+            } else if (i < 3 && item == Items.POTION && isWaterPotion(heldStack)) {
                 if (!player.getAbilities().instabuild) {
                     player.setItemInHand(handIn, new ItemStack(Items.GLASS_BOTTLE));
                 }
                 world.setBlockAndUpdate(pos, state.setValue(WATER_LEVEL, i + 1));
                 world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BOTTLE_EMPTY, SoundSource.NEUTRAL, 1.0F, 1.0F);
-            } else if (tileEntity instanceof KettleBlockEntity kettleEntity) {
+            } else if (world.getBlockEntity(pos) instanceof KettleBlockEntity kettleEntity) {
                 ItemStack servingStack = kettleEntity.useHeldItemOnMeal(heldStack);
                 if (servingStack != ItemStack.EMPTY) {
                     if (!player.getInventory().add(servingStack)) {
                         player.drop(servingStack, false);
                     }
-                    world.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    world.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.BLOCKS, 1.0F, 1.0F);
                 } else {
-                    MenuProvider screenHandlerFactory = state.getMenuProvider(world, pos);
-                    if (screenHandlerFactory != null) {
-                        player.openMenu(screenHandlerFactory);
-                    }
+                    player.openMenu(kettleEntity);
                 }
             }
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.SUCCESS;
+    }
+
+    private static boolean isWaterPotion(ItemStack stack) {
+        PotionContents contents = stack.get(DataComponents.POTION_CONTENTS);
+        return contents != null && contents.is(Potions.WATER);
     }
 
     @Override
@@ -159,77 +161,48 @@ public class KettleBlock extends BaseEntityBlock implements SimpleWaterloggedBlo
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor world, BlockPos currentPos, BlockPos facingPos) {
+    protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess tickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
         if (state.getValue(WATERLOGGED)) {
-            world.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(world));
+            tickAccess.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
-        if (facing.getAxis().equals(Direction.Axis.Y) && !state.getValue(SUPPORT).equals(CookingPotSupport.HANDLE)) {
-            return state.setValue(SUPPORT, getTrayState(world, currentPos));
+        if (direction.getAxis().equals(Direction.Axis.Y) && !state.getValue(SUPPORT).equals(CookingPotSupport.HANDLE)) {
+            return state.setValue(SUPPORT, getTrayState(level, pos));
         }
         return state;
     }
 
-    private CookingPotSupport getTrayState(LevelAccessor world, BlockPos pos) {
-        if (world.getBlockState(pos.below()).is(TagsRegistry.TRAY_HEAT_SOURCES)) {
+    private CookingPotSupport getTrayState(LevelReader world, BlockPos pos) {
+        if (world.getBlockState(pos.below()).is(ModTags.TRAY_HEAT_SOURCES)) {
             return CookingPotSupport.TRAY;
         }
         return CookingPotSupport.NONE;
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter worldIn, BlockPos pos, BlockState state) {
-        ItemStack stack = super.getCloneItemStack(worldIn, pos, state);
-        KettleBlockEntity kettleEntity = (KettleBlockEntity) worldIn.getBlockEntity(pos);
-        if (kettleEntity != null) {
-            CompoundTag nbt = kettleEntity.writeMeal(new CompoundTag());
-            if (!nbt.isEmpty()) {
-                stack.addTagElement("BlockEntityTag", nbt);
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
+        ItemStack stack = super.getCloneItemStack(level, pos, state, includeData);
+        level.getBlockEntity(pos, FRBlockEntityTypes.KETTLE).ifPresent(kettleEntity -> {
+            if (level instanceof Level actualLevel) {
+                CompoundTag nbt = kettleEntity.writeMeal(new CompoundTag(), actualLevel.registryAccess());
+                if (!nbt.isEmpty()) {
+                    stack.set(DataComponents.BLOCK_ENTITY_DATA, TypedEntityData.<BlockEntityType<?>>of(kettleEntity.getType(), nbt));
+                }
             }
-            if (kettleEntity.hasCustomName()) {
-                stack.setHoverName(kettleEntity.getCustomName());
+            if (kettleEntity.getCustomName() != null) {
+                stack.set(DataComponents.CUSTOM_NAME, kettleEntity.getCustomName());
             }
-        }
+        });
         return stack;
     }
 
     @Override
-    public void onRemove(BlockState state, Level worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (state.getBlock() != newState.getBlock()) {
-            BlockEntity tileEntity = worldIn.getBlockEntity(pos);
-            if (tileEntity instanceof KettleBlockEntity kettleEntity) {
-                Containers.dropContents(worldIn, pos, kettleEntity.getDroppableInventory());
-                kettleEntity.grantStoredRecipeExperience(worldIn, Vec3.atCenterOf(pos));
-                worldIn.updateNeighbourForOutputSignal(pos, this);
-            }
-
-            super.onRemove(state, worldIn, pos, newState, isMoving);
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean moving) {
+        if (level.getBlockEntity(pos) instanceof KettleBlockEntity kettleEntity) {
+            Containers.dropContents(level, pos, kettleEntity.getDroppableInventory());
+            kettleEntity.grantStoredRecipeExperience(level, Vec3.atCenterOf(pos));
+            level.updateNeighbourForOutputSignal(pos, this);
         }
-    }
-
-    @Override
-    @Environment(EnvType.CLIENT)
-    public void appendHoverText(ItemStack stack, @Nullable BlockGetter worldIn, List<Component> tooltip, TooltipFlag flagIn) {
-        super.appendHoverText(stack, worldIn, tooltip, flagIn);
-        CompoundTag nbt = stack.getTagElement("BlockEntityTag");
-        if (nbt != null) {
-            CompoundTag inventoryTag = nbt.getCompound("Inventory");
-            if (inventoryTag.contains("Items", 9)) {
-                NonNullList<ItemStack> inventory = NonNullList.withSize(9, ItemStack.EMPTY);
-                ContainerHelper.loadAllItems(inventoryTag, inventory);
-                ItemStack mealStack = (ItemStack)inventory.get(2);
-                if (!mealStack.isEmpty()) {
-                    MutableComponent textServingsOf = mealStack.getCount() == 1
-                            ? FRTextUtils.getTranslation("tooltip.kettle.single_serving")
-                            : FRTextUtils.getTranslation("tooltip.kettle.many_servings", mealStack.getCount());
-                    tooltip.add(textServingsOf.withStyle(ChatFormatting.GRAY));
-                    MutableComponent textMealName = mealStack.getHoverName().copy();
-                    tooltip.add(textMealName.withStyle(mealStack.getRarity().color));
-                }
-            }
-        } else {
-            MutableComponent textEmpty = FRTextUtils.getTranslation("tooltip.kettle.empty");
-            tooltip.add(textEmpty.withStyle(ChatFormatting.GRAY));
-        }
+        super.affectNeighborsAfterRemoval(state, level, pos, moving);
     }
 
     @Override
@@ -240,11 +213,9 @@ public class KettleBlock extends BaseEntityBlock implements SimpleWaterloggedBlo
 
     @Override
     public void setPlacedBy(Level worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (stack.hasCustomHoverName()) {
-            BlockEntity tileEntity = worldIn.getBlockEntity(pos);
-            if (tileEntity instanceof KettleBlockEntity) {
-                ((KettleBlockEntity) tileEntity).setCustomName(stack.getHoverName());
-            }
+        Component name = stack.get(DataComponents.CUSTOM_NAME);
+        if (name != null && worldIn.getBlockEntity(pos) instanceof KettleBlockEntity kettleEntity) {
+            kettleEntity.setCustomName(name);
         }
     }
 
@@ -252,13 +223,12 @@ public class KettleBlock extends BaseEntityBlock implements SimpleWaterloggedBlo
     @Environment(EnvType.CLIENT)
     public void animateTick(BlockState stateIn, Level worldIn, BlockPos pos, RandomSource rand) {
         BlockEntity tileEntity = worldIn.getBlockEntity(pos);
-        if (tileEntity instanceof KettleBlockEntity && ((KettleBlockEntity) tileEntity).isHeated() && ((KettleBlockEntity) tileEntity).isHeated() && stateIn.getValue(LID)) {
+        if (tileEntity instanceof KettleBlockEntity kettleEntity && kettleEntity.isHeated() && stateIn.getValue(LID)) {
             double x = pos.getX() + 0.5D;
             double y = pos.getY();
             double z = pos.getZ() + 0.5D;
             if (rand.nextInt(20) == 0) {
                 worldIn.playLocalSound(x, y, z, FRSounds.BLOCK_KETTLE_WHISTLE, SoundSource.BLOCKS, 0.07F, rand.nextFloat() * 0.2F + 0.9F, false);
-
             }
         }
     }
@@ -269,10 +239,10 @@ public class KettleBlock extends BaseEntityBlock implements SimpleWaterloggedBlo
     }
 
     @Override
-    public int getAnalogOutputSignal(BlockState blockState, Level worldIn, BlockPos pos) {
+    public int getAnalogOutputSignal(BlockState blockState, Level worldIn, BlockPos pos, Direction direction) {
         BlockEntity tileEntity = worldIn.getBlockEntity(pos);
-        if (tileEntity instanceof KettleBlockEntity) {
-            ItemHandler inventory = ((KettleBlockEntity) tileEntity).getInventory();
+        if (tileEntity instanceof KettleBlockEntity kettleEntity) {
+            ItemHandler inventory = kettleEntity.getInventory();
             return MathUtils.calcRedstoneFromItemHandler(inventory);
         }
         return 0;
@@ -292,10 +262,14 @@ public class KettleBlock extends BaseEntityBlock implements SimpleWaterloggedBlo
     @Override
     @Nullable
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntity) {
-        if (level.isClientSide) {
+        if (level.isClientSide()) {
             return createTickerHelper(blockEntity, FRBlockEntityTypes.KETTLE, KettleBlockEntity::animationTick);
         } else {
-            return createTickerHelper(blockEntity, FRBlockEntityTypes.KETTLE, KettleBlockEntity::cookingTick);
+            return createTickerHelper(blockEntity, FRBlockEntityTypes.KETTLE, (menuLevel, pos, menuState, kettle) -> {
+                if (menuLevel instanceof ServerLevel server) {
+                    KettleBlockEntity.cookingTick(server, pos, menuState, kettle);
+                }
+            });
         }
     }
 }

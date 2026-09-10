@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "mhm",
+    "rrr",
+    "sps"
+  ],
+  "key": {
+    "m": "#c:milk",
+    "h": "minecraft:honey_bottle",
+    "r": "farmersrespite:rose_hips",
+    "s": "minecraft:sugar",
+    "p": "farmersdelight:pie_crust"
+  },
+  "result": {
+    "id": "farmersrespite:rose_hip_pie"
+  }
+}

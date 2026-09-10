@@ -1,0 +1,14 @@
+{
+  "type": "farmersdelight:cutting",
+  "ingredients": [
+    "farmersrespite:coffee_berries"
+  ],
+  "tool": "#c:tools/knife",
+  "result": [
+    {
+      "item": {
+        "id": "farmersrespite:coffee_beans"
+      }
+    }
+  ]
+}

@@ -3,27 +3,39 @@ package com.chefsdelights.farmersrespite.common.block.entity.container;
 import com.chefsdelights.farmersrespite.common.block.KettleBlock;
 import com.chefsdelights.farmersrespite.common.block.entity.KettleBlockEntity;
 import com.chefsdelights.farmersrespite.common.block.entity.inventory.ItemHandler;
+import com.chefsdelights.farmersrespite.common.block.entity.inventory.RecipeWrapper;
 import com.chefsdelights.farmersrespite.common.block.entity.inventory.slot.SlotItemHandler;
+import com.chefsdelights.farmersrespite.common.crafting.KettleRecipe;
 import com.chefsdelights.farmersrespite.core.FarmersRespite;
 import com.chefsdelights.farmersrespite.core.registry.FRBlocks;
 import com.chefsdelights.farmersrespite.core.registry.FRContainerTypes;
+import com.chefsdelights.farmersrespite.core.registry.FRRecipeBookTypes;
 import com.mojang.datafixers.util.Pair;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.recipebook.ServerPlaceRecipe;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.StackedItemContents;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.List;
 import java.util.Objects;
 
-public class KettleContainer extends AbstractContainerMenu {
-    public static final ResourceLocation EMPTY_CONTAINER_SLOT_BOTTLE = new ResourceLocation(FarmersRespite.MOD_ID, "item/empty_container_slot_bottle");
+public class KettleContainer extends RecipeBookMenu {
+    public static final Identifier EMPTY_CONTAINER_SLOT_BOTTLE = FarmersRespite.id("container/slot/bottle");
+    public static final int INPUT_SLOTS = 2;
+    public static final int MEAL_SLOT = 2;
+    public static final int CONTAINER_SLOT = 3;
+    public static final int OUTPUT_SLOT = 4;
 
     public final KettleBlockEntity tileEntity;
     public final ItemHandler inventory;
@@ -59,8 +71,8 @@ public class KettleContainer extends AbstractContainerMenu {
 
             @Override
             @Environment(EnvType.CLIENT)
-            public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
-                return Pair.of(InventoryMenu.BLOCK_ATLAS, EMPTY_CONTAINER_SLOT_BOTTLE);
+            public Identifier getNoItemIcon() {
+                return EMPTY_CONTAINER_SLOT_BOTTLE;
             }
         });
 
@@ -84,18 +96,65 @@ public class KettleContainer extends AbstractContainerMenu {
         this.addDataSlots(kettleDataIn);
     }
 
-    private static KettleBlockEntity getTileEntity(final Inventory playerInventory, final FriendlyByteBuf data) {
+    private static KettleBlockEntity getTileEntity(final Inventory playerInventory, final BlockPos pos) {
         Objects.requireNonNull(playerInventory, "playerInventory cannot be null");
-        Objects.requireNonNull(data, "data cannot be null");
-        final BlockEntity tileAtPos = playerInventory.player.level().getBlockEntity(data.readBlockPos());
+        Objects.requireNonNull(pos, "pos cannot be null");
+        final BlockEntity tileAtPos = playerInventory.player.level().getBlockEntity(pos);
         if (tileAtPos instanceof KettleBlockEntity) {
             return (KettleBlockEntity) tileAtPos;
         }
         throw new IllegalStateException("Tile entity is not correct! " + tileAtPos);
     }
 
-    public KettleContainer(final int windowId, final Inventory playerInventory, final FriendlyByteBuf data) {
-        this(windowId, playerInventory, getTileEntity(playerInventory, data), new SimpleContainerData(4));
+    public KettleContainer(final int windowId, final Inventory playerInventory, final BlockPos pos) {
+        this(windowId, playerInventory, getTileEntity(playerInventory, pos), new SimpleContainerData(2));
+    }
+
+    @Override
+    public PostPlaceAction handlePlacement(boolean craftAll, boolean useMaxItems, RecipeHolder<?> holder, ServerLevel level, Inventory playerInventory) {
+        if (holder.value() instanceof KettleRecipe) {
+            @SuppressWarnings("unchecked")
+            RecipeHolder<KettleRecipe> brewing = (RecipeHolder<KettleRecipe>) holder;
+            List<Slot> inputs = this.slots.subList(0, 2);
+            return ServerPlaceRecipe.placeRecipe(new KettleMenuAccess(level), 1, 2, inputs, inputs, playerInventory, brewing, craftAll, useMaxItems);
+        }
+        return PostPlaceAction.NOTHING;
+    }
+
+    @Override
+    public void fillCraftSlotsStackedContents(StackedItemContents contents) {
+        for (int i = 0; i < this.inventory.getContainerSize(); ++i) {
+            contents.accountSimpleStack(this.inventory.getItem(i));
+        }
+    }
+
+    @Override
+    public RecipeBookType getRecipeBookType() {
+        return FRRecipeBookTypes.BREWING;
+    }
+
+    private class KettleMenuAccess implements ServerPlaceRecipe.CraftingMenuAccess<KettleRecipe> {
+        private final ServerLevel level;
+
+        KettleMenuAccess(ServerLevel level) {
+            this.level = level;
+        }
+
+        @Override
+        public void fillCraftSlotsStackedContents(StackedItemContents contents) {
+            KettleContainer.this.fillCraftSlotsStackedContents(contents);
+        }
+
+        @Override
+        public void clearCraftingContent() {
+            KettleContainer.this.getSlot(0).set(ItemStack.EMPTY);
+            KettleContainer.this.getSlot(1).set(ItemStack.EMPTY);
+        }
+
+        @Override
+        public boolean recipeMatches(RecipeHolder<KettleRecipe> holder) {
+            return holder.value().matches(new RecipeWrapper(KettleContainer.this.inventory), this.level);
+        }
     }
 
     @Override

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "msm",
+    "cec",
+    "www"
+  ],
+  "key": {
+    "m": "#c:milk",
+    "s": "minecraft:sugar",
+    "c": "#c:crops/coffee_beans",
+    "e": "#c:eggs",
+    "w": "minecraft:wheat"
+  },
+  "result": {
+    "id": "farmersrespite:coffee_cake"
+  }
+}
