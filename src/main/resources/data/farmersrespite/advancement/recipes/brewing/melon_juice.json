@@ -17,7 +17,7 @@
     "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "farmersrespite:brewing/melon_juice"
+        "recipes": "farmersrespite:brewing/melon_juice"
       }
     }
   },

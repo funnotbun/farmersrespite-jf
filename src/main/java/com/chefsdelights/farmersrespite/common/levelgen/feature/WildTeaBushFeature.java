@@ -1,27 +1,27 @@
 package com.chefsdelights.farmersrespite.common.levelgen.feature;
 
 import com.chefsdelights.farmersrespite.core.registry.FRBlocks;
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
 
-public class WildTeaBushFeature extends Feature<SimpleBlockConfiguration> {
-    public WildTeaBushFeature(Codec<SimpleBlockConfiguration> config) {
-        super(config);
+public class WildTeaBushFeature implements Feature {
+    public static final MapCodec<WildTeaBushFeature> CODEC = MapCodec.unit(new WildTeaBushFeature());
+
+    @Override
+    public MapCodec<? extends Feature> codec() {
+        return CODEC;
     }
 
     @Override
-    public boolean place(FeaturePlaceContext<SimpleBlockConfiguration> context) {
-        SimpleBlockConfiguration config = context.config();
-        WorldGenLevel level = context.level();
+    public boolean place(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin) {
         BlockState blockstate = FRBlocks.WILD_TEA_BUSH.defaultBlockState();
-        BlockPos pos = context.origin();
-        BlockState state = config.toPlace().getState(level, context.random(), pos);
-        if (state.canSurvive(level, pos)) {
+        BlockPos pos = origin;
+        if (blockstate.canSurvive(level, pos)) {
             level.setBlock(pos, blockstate, 19);
             return true;
         }

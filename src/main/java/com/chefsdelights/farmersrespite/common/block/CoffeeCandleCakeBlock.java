@@ -5,9 +5,6 @@ import com.chefsdelights.farmersrespite.core.registry.FREffects;
 import com.chefsdelights.farmersrespite.core.registry.FRItems;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.registries.BuiltInRegistries;
 import vectorwing.farmersdelight.common.tag.CommonTags;
 import vectorwing.farmersdelight.common.tag.ModTags;
 import net.minecraft.core.BlockPos;
@@ -47,9 +44,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.Map;
 
 public class CoffeeCandleCakeBlock extends AbstractCandleBlock {
-    public static final MapCodec<CoffeeCandleCakeBlock> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
-            BuiltInRegistries.BLOCK.byNameCodec().fieldOf("candle").forGetter(block -> block.candle),
-            propertiesCodec()).apply(inst, CoffeeCandleCakeBlock::new));
     public static final BooleanProperty LIT = AbstractCandleBlock.LIT;
     protected static final VoxelShape CAKE_SHAPE = Block.box(1.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D);
     protected static final VoxelShape CANDLE_SHAPE = Block.box(7.0D, 8.0D, 7.0D, 9.0D, 14.0D, 9.0D);
@@ -65,11 +59,6 @@ public class CoffeeCandleCakeBlock extends AbstractCandleBlock {
         this.candle = candle;
 
         BY_CANDLE_AND_CAKE.put(Pair.of(candle, (CoffeeCakeBlock) FRBlocks.COFFEE_CAKE), this);
-    }
-
-    @Override
-    protected MapCodec<? extends AbstractCandleBlock> codec() {
-        return CODEC;
     }
 
     protected Iterable<Vec3> getParticleOffsets(BlockState p_152868_) {

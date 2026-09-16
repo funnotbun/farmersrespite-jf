@@ -18,6 +18,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BonemealSource;
 import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.CropBlock;
@@ -81,9 +82,9 @@ public class CoffeeMiddleStemBlock extends BushBlock implements BonemealableBloc
             if ((random.nextInt(2) == 0)) {
                 if (neighborState.getBlock() instanceof CropBlock) {
                     level.setBlockAndUpdate(neighborPos, witherRootsState);
-                    performBonemeal(level, random, pos, state);
+                    performBonemeal(level, random, pos, state, BonemealSource.INTERACTION);
                 } else if (level.dimension() == Level.NETHER) {
-                    performBonemeal(level, random, pos, state);
+                    performBonemeal(level, random, pos, state, BonemealSource.INTERACTION);
                 }
             }
         }
@@ -106,18 +107,18 @@ public class CoffeeMiddleStemBlock extends BushBlock implements BonemealableBloc
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state, BonemealSource source) {
         int i = state.getValue(AGE);
         return !(i == 2);
     }
 
     @Override
-    public boolean isBonemealSuccess(Level level, RandomSource rand, BlockPos pos, BlockState state) {
+    public boolean isBonemealSuccess(Level level, RandomSource rand, BlockPos pos, BlockState state, BonemealSource source) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel level, RandomSource rand, BlockPos pos, BlockState state) {
+    public void performBonemeal(ServerLevel level, RandomSource rand, BlockPos pos, BlockState state, BonemealSource source) {
         int i = state.getValue(AGE);
         level.setBlockAndUpdate(pos, state.setValue(AGE, i + 1));
     }

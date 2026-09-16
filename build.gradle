@@ -51,8 +51,8 @@ dependencies {
 	implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 
-	// Farmer's Delight Refabricated — published against base MC (no per-patch artifacts).
-	implementation("vectorwing:FarmersDelight:${minecraft_min_version}-${farmersdelight_version}+refabricated") {
+	// Farmer's Delight Refabricated — 26.3 builds publish to Modrinth (Greenhouse has none yet).
+	implementation("maven.modrinth:farmers-delight-refabricated:${minecraft_min_version}-${farmersdelight_version}") {
 		exclude(group: "net.fabricmc")
 	}
 
@@ -63,6 +63,7 @@ dependencies {
 
 	// JEI (optional client integration; never bundled)
 	compileOnly("maven.modrinth:jei:${jei_version}")
+	localRuntime("maven.modrinth:jei:${jei_version}")
 }
 
 processResources {

@@ -2,9 +2,13 @@ package com.chefsdelights.farmersrespite.core.event;
 
 import com.chefsdelights.farmersrespite.common.loot.function.FRCopyMealFunction;
 import com.chefsdelights.farmersrespite.core.registry.FRItems;
+import net.fabricmc.fabric.api.item.v1.DefaultItemComponentEvents;
 import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.level.block.ComposterBlock;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.Compostable;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ResolvableInt;
 
 public class FRCommonSetup {
     public static void init() {
@@ -13,18 +17,25 @@ public class FRCommonSetup {
     }
 
     public static void registerCompostables() {
-        ComposterBlock.COMPOSTABLES.put(FRItems.GREEN_TEA_LEAVES, 0.3F);
-        ComposterBlock.COMPOSTABLES.put(FRItems.YELLOW_TEA_LEAVES, 0.2F);
-        ComposterBlock.COMPOSTABLES.put(FRItems.BLACK_TEA_LEAVES, 0.1F);
-        ComposterBlock.COMPOSTABLES.put(FRItems.COFFEE_BERRIES, 0.3F);
-        ComposterBlock.COMPOSTABLES.put(FRItems.TEA_SEEDS, 0.3F);
-        ComposterBlock.COMPOSTABLES.put(FRItems.ROSE_HIPS, 0.3F);
+        DefaultItemComponentEvents.MODIFY.register(context -> {
+            compostable(context, FRItems.GREEN_TEA_LEAVES, 30);
+            compostable(context, FRItems.YELLOW_TEA_LEAVES, 20);
+            compostable(context, FRItems.BLACK_TEA_LEAVES, 10);
+            compostable(context, FRItems.COFFEE_BERRIES, 30);
+            compostable(context, FRItems.TEA_SEEDS, 30);
+            compostable(context, FRItems.ROSE_HIPS, 30);
 
-        ComposterBlock.COMPOSTABLES.put(FRItems.GREEN_TEA_COOKIE, 0.85F);
-        ComposterBlock.COMPOSTABLES.put(FRItems.WILD_TEA_BUSH, 0.65F);
-        ComposterBlock.COMPOSTABLES.put(FRItems.COFFEE_CAKE, 1.0F);
-        ComposterBlock.COMPOSTABLES.put(FRItems.ROSE_HIP_PIE, 1.0F);
-        ComposterBlock.COMPOSTABLES.put(FRItems.COFFEE_CAKE_SLICE, 0.85F);
-        ComposterBlock.COMPOSTABLES.put(FRItems.ROSE_HIP_PIE_SLICE, 0.85F);
+            compostable(context, FRItems.GREEN_TEA_COOKIE, 85);
+            compostable(context, FRItems.WILD_TEA_BUSH, 65);
+            compostable(context, FRItems.COFFEE_CAKE, 100);
+            compostable(context, FRItems.ROSE_HIP_PIE, 100);
+            compostable(context, FRItems.COFFEE_CAKE_SLICE, 85);
+            compostable(context, FRItems.ROSE_HIP_PIE_SLICE, 85);
+        });
+    }
+
+    private static void compostable(DefaultItemComponentEvents.ModifyContext context, Item item, int chance) {
+        context.modify(item, builder ->
+                builder.set(DataComponents.COMPOSTABLE, new Compostable(new ResolvableInt.Constant(chance))));
     }
 }

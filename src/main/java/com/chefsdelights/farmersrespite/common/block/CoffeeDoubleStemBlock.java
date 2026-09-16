@@ -128,19 +128,19 @@ public class CoffeeDoubleStemBlock extends BushBlock implements BonemealableBloc
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state, BonemealSource source) {
         int i = state.getValue(AGE);
         int j = state.getValue(AGE1);
         return !(i == 2 && j == 2);
     }
 
     @Override
-    public boolean isBonemealSuccess(Level level, RandomSource rand, BlockPos pos, BlockState state) {
+    public boolean isBonemealSuccess(Level level, RandomSource rand, BlockPos pos, BlockState state, BonemealSource source) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel level, RandomSource rand, BlockPos pos, BlockState state) {
+    public void performBonemeal(ServerLevel level, RandomSource rand, BlockPos pos, BlockState state, BonemealSource source) {
         int i = state.getValue(AGE);
         int j = state.getValue(AGE1);
         int random = rand.nextInt(2);

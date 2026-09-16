@@ -17,7 +17,7 @@
     "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "farmersrespite:brewing/strong_rose_hip_tea"
+        "recipes": "farmersrespite:brewing/strong_rose_hip_tea"
       }
     }
   },

@@ -4,7 +4,7 @@ import com.chefsdelights.farmersrespite.common.block.CoffeeBushBlock;
 import com.chefsdelights.farmersrespite.common.block.CoffeeBushTopBlock;
 import com.chefsdelights.farmersrespite.common.block.CoffeeStemBlock;
 import com.chefsdelights.farmersrespite.core.registry.FRBlocks;
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -12,25 +12,25 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class CoffeeBushFeature extends Feature<NoneFeatureConfiguration> {
-    public CoffeeBushFeature(Codec<NoneFeatureConfiguration> config) {
-        super(config);
-    }
+public class CoffeeBushFeature implements Feature {
+    public static final MapCodec<CoffeeBushFeature> CODEC = MapCodec.unit(new CoffeeBushFeature());
 
     public static final Direction[] DIRECTIONS = new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
 
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
-        WorldGenLevel level = context.level();
-        BlockPos pos = context.origin();
-        RandomSource rand = level.getRandom();
+    public MapCodec<? extends Feature> codec() {
+        return CODEC;
+    }
+
+    @Override
+    public boolean place(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin) {
+        BlockPos pos = origin;
         BlockState coffeeBushBottom = FRBlocks.COFFEE_BUSH.defaultBlockState();
         BlockState coffeeBushTop = FRBlocks.COFFEE_BUSH.defaultBlockState().setValue(CoffeeBushBlock.HALF, DoubleBlockHalf.UPPER);
         BlockState coffeeStem = FRBlocks.COFFEE_STEM.defaultBlockState();
@@ -38,7 +38,7 @@ public class CoffeeBushFeature extends Feature<NoneFeatureConfiguration> {
         BlockState coffeeBushTopTop = FRBlocks.COFFEE_BUSH_TOP.defaultBlockState().setValue(CoffeeBushTopBlock.HALF, DoubleBlockHalf.UPPER);
         HashMap<BlockPos, BlockState> blocks = new HashMap<>();
         int i = 0;
-        if (rand.nextInt(4) > 2) {
+        if (random.nextInt(4) > 2) {
             for (int x = -1; x <= 1; ++x) {
                 for (int z = -2; z <= 2; ++z) {
                     if (Math.abs(x) < 2 || Math.abs(z) < 2) {
@@ -50,11 +50,11 @@ public class CoffeeBushFeature extends Feature<NoneFeatureConfiguration> {
                                 BlockPos above = blockpos.above();
                                 BlockPos evenMoreAbove = blockpos.above(2);
                                 if (level.isEmptyBlock(blockpos) && !level.isOutsideBuildHeight(above) && level.isEmptyBlock(above)) {
-                                    if (rand.nextInt(5) < 3) {
+                                    if (random.nextInt(5) < 3) {
                                         blocks.put(blockpos, coffeeBushBottom);
                                         blocks.put(above, coffeeBushTop);
                                     } else if (level.isEmptyBlock(evenMoreAbove)) {
-                                        blocks.put(blockpos, coffeeStem.setValue(CoffeeStemBlock.FACING, DIRECTIONS[rand.nextInt(4)]).setValue(CoffeeStemBlock.AGE, rand.nextInt(3)));
+                                        blocks.put(blockpos, coffeeStem.setValue(CoffeeStemBlock.FACING, DIRECTIONS[random.nextInt(4)]).setValue(CoffeeStemBlock.AGE, random.nextInt(3)));
                                         blocks.put(above, coffeeBushTopBottom);
                                         blocks.put(evenMoreAbove, coffeeBushTopTop);
                                     }

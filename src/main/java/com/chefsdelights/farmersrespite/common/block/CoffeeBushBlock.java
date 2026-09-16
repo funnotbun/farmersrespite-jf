@@ -86,9 +86,9 @@ public class CoffeeBushBlock extends BushBlock implements BonemealableBlock {
             if ((state.getValue(HALF) == DoubleBlockHalf.LOWER) && (level.isEmptyBlock(pos.above().above())) && random.nextInt(2) == 0) {
                 if (neighborState.getBlock() instanceof CropBlock) {
                     level.setBlockAndUpdate(neighborPos, witherRootsState);
-                    performBonemeal(level, random, pos, state);
+                    performBonemeal(level, random, pos, state, BonemealSource.INTERACTION);
                 } else if (level.dimension() == Level.NETHER) {
-                    performBonemeal(level, random, pos, state);
+                    performBonemeal(level, random, pos, state, BonemealSource.INTERACTION);
                 }
             }
         }
@@ -141,12 +141,12 @@ public class CoffeeBushBlock extends BushBlock implements BonemealableBlock {
 
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader levelReader, BlockPos blockPos, BlockState blockState) {
+    public boolean isValidBonemealTarget(LevelReader levelReader, BlockPos blockPos, BlockState blockState, BonemealSource source) {
         return FRConfiguration.get().enableBoneMealCoffeeBush;
     }
 
     @Override
-    public boolean isBonemealSuccess(Level level, RandomSource rand, BlockPos pos, BlockState state) {
+    public boolean isBonemealSuccess(Level level, RandomSource rand, BlockPos pos, BlockState state, BonemealSource source) {
         return true;
     }
 
@@ -169,7 +169,7 @@ public class CoffeeBushBlock extends BushBlock implements BonemealableBlock {
 
 
     @Override
-    public void performBonemeal(ServerLevel level, RandomSource rand, BlockPos pos, BlockState state) {
+    public void performBonemeal(ServerLevel level, RandomSource rand, BlockPos pos, BlockState state, BonemealSource source) {
         if (state.getValue(HALF) == DoubleBlockHalf.LOWER && (level.isEmptyBlock(pos.above().above()))) {
             level.setBlockAndUpdate(pos, FRBlocks.COFFEE_STEM.defaultBlockState().setValue(CoffeeStemBlock.FACING, this.getDirection(rand)));
             level.setBlockAndUpdate(pos.above(), FRBlocks.COFFEE_BUSH_TOP.defaultBlockState());

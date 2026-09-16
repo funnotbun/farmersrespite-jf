@@ -86,9 +86,9 @@ public class CoffeeBushTopBlock extends BushBlock implements BonemealableBlock {
             if ((state.getValue(HALF) == DoubleBlockHalf.LOWER) && (level.isEmptyBlock(pos.above().above())) && random.nextInt(2) == 0) {
                 if (neighborState.getBlock() instanceof CropBlock) {
                     level.setBlockAndUpdate(neighborPos, witherRootsState);
-                    performBonemeal(level, random, pos, state);
+                    performBonemeal(level, random, pos, state, BonemealSource.INTERACTION);
                 } else if (level.dimension() == Level.NETHER) {
-                    performBonemeal(level, random, pos, state);
+                    performBonemeal(level, random, pos, state, BonemealSource.INTERACTION);
                 }
             }
         }
@@ -157,7 +157,7 @@ public class CoffeeBushTopBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state, BonemealSource source) {
         if (state.getValue(HALF) == DoubleBlockHalf.LOWER) {
             BlockPos blockpos = pos.below();
             BlockState blockstate = level.getBlockState(blockpos);
@@ -172,7 +172,7 @@ public class CoffeeBushTopBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public boolean isBonemealSuccess(Level level, RandomSource rand, BlockPos pos, BlockState state) {
+    public boolean isBonemealSuccess(Level level, RandomSource rand, BlockPos pos, BlockState state, BonemealSource source) {
         return FRConfiguration.get().enableBoneMealCoffeeBush;
     }
 
@@ -194,7 +194,7 @@ public class CoffeeBushTopBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public void performBonemeal(ServerLevel world, RandomSource rand, BlockPos pos, BlockState state) {
+    public void performBonemeal(ServerLevel world, RandomSource rand, BlockPos pos, BlockState state, BonemealSource source) {
         BlockState belowState = world.getBlockState(pos.below());
         BlockState belowBelowState = world.getBlockState(pos.below().below());
         if (state.getValue(HALF) == DoubleBlockHalf.LOWER && (world.isEmptyBlock(pos.above().above())) && belowState.getBlock() instanceof CoffeeStemBlock) {

@@ -11,6 +11,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BonemealSource;
 import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -43,22 +44,22 @@ public class SmallTeaBushBlock extends BushBlock implements BonemealableBlock {
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         if (random.nextInt(50) == 0) {
-            performBonemeal(level, random, pos, state);
+            performBonemeal(level, random, pos, state, BonemealSource.INTERACTION);
         }
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state) {
+    public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, BonemealSource source) {
         return FRConfiguration.get().enableBoneMealTeaBush;
     }
 
     @Override
-    public boolean isBonemealSuccess(Level world, RandomSource rand, BlockPos pos, BlockState state) {
+    public boolean isBonemealSuccess(Level world, RandomSource rand, BlockPos pos, BlockState state, BonemealSource source) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel world, RandomSource rand, BlockPos pos, BlockState state) {
+    public void performBonemeal(ServerLevel world, RandomSource rand, BlockPos pos, BlockState state, BonemealSource source) {
         if (world.isEmptyBlock(pos.above())) {
             world.setBlockAndUpdate(pos, FRBlocks.TEA_BUSH.defaultBlockState());
             world.setBlockAndUpdate(pos.above(), FRBlocks.TEA_BUSH.defaultBlockState().setValue(TeaBushBlock.HALF, DoubleBlockHalf.UPPER));

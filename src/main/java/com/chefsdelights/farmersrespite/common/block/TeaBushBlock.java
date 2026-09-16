@@ -23,6 +23,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BonemealSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.BushBlock;
@@ -86,7 +87,7 @@ public class TeaBushBlock extends BushBlock implements BonemealableBlock {
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         if ((state.getValue(HALF) == DoubleBlockHalf.LOWER) && random.nextInt(15) == 0) {
-            performBonemeal(level, random, pos, state);
+            performBonemeal(level, random, pos, state, BonemealSource.INTERACTION);
         }
     }
 
@@ -175,7 +176,7 @@ public class TeaBushBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state) {
+    public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, BonemealSource source) {
         int i = state.getValue(AGE);
         if (i != 3) {
             return FRConfiguration.get().enableBoneMealTeaBush;
@@ -184,12 +185,12 @@ public class TeaBushBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public boolean isBonemealSuccess(Level level, RandomSource randomSource, BlockPos blockPos, BlockState blockState) {
+    public boolean isBonemealSuccess(Level level, RandomSource randomSource, BlockPos blockPos, BlockState blockState, BonemealSource source) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel serverLevel, RandomSource randomSource, BlockPos blockPos, BlockState blockState) {
+    public void performBonemeal(ServerLevel serverLevel, RandomSource randomSource, BlockPos blockPos, BlockState blockState, BonemealSource source) {
         int i = blockState.getValue(AGE);
         serverLevel.setBlockAndUpdate(blockPos, blockState.setValue(AGE, Integer.valueOf(i + 1)));
     }

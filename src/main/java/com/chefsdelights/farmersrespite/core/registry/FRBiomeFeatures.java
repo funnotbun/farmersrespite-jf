@@ -3,46 +3,32 @@ package com.chefsdelights.farmersrespite.core.registry;
 import com.chefsdelights.farmersrespite.common.levelgen.feature.CoffeeBushFeature;
 import com.chefsdelights.farmersrespite.common.levelgen.feature.WildTeaBushFeature;
 import com.chefsdelights.farmersrespite.core.FarmersRespite;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
-
-import java.util.function.Supplier;
 
 
 public enum FRBiomeFeatures {
-    WILD_COFFEE("wild_coffee_bush", () -> new CoffeeBushFeature(NoneFeatureConfiguration.CODEC)),
-    WILD_TEA("wild_tea_bush", () -> new WildTeaBushFeature(SimpleBlockConfiguration.CODEC));
+    WILD_COFFEE("wild_coffee_bush", CoffeeBushFeature.CODEC),
+    WILD_TEA("wild_tea_bush", WildTeaBushFeature.CODEC);
 
     private final String pathName;
-    private final Supplier<Feature<? extends FeatureConfiguration>> featureSupplier;
-    private Feature<? extends FeatureConfiguration> feature;
+    private final MapCodec<? extends Feature> codec;
 
-    FRBiomeFeatures(String pathName, Supplier<Feature<? extends FeatureConfiguration>> featureSupplier) {
+    FRBiomeFeatures(String pathName, MapCodec<? extends Feature> codec) {
         this.pathName = pathName;
-        this.featureSupplier = featureSupplier;
+        this.codec = codec;
     }
 
     public static void registerAll() {
         for (FRBiomeFeatures value : values()) {
-            Registry.register(BuiltInRegistries.FEATURE, FarmersRespite.id(value.pathName), value.featureSupplier.get());
+            Registry.register(BuiltInRegistries.FEATURE_TYPE, FarmersRespite.id(value.pathName), value.codec);
         }
-    }
-
-    public Feature<? extends FeatureConfiguration> get() {
-        if (this.feature == null) {
-            this.feature = this.featureSupplier.get();
-        }
-
-        return this.feature;
     }
 
     public enum FRConfiguredFeaturesRegistry {
@@ -50,7 +36,7 @@ public enum FRBiomeFeatures {
         PATCH_COFFEE_BUSH("patch_wild_coffee_bush");
 
         private final Identifier featureIdentifier;
-        private ResourceKey<ConfiguredFeature<?, ?>> configuredFeatureRegistryKey;
+        private ResourceKey<Feature> configuredFeatureRegistryKey;
         private ResourceKey<PlacedFeature> featureRegistryKey;
 
         FRConfiguredFeaturesRegistry(String featurePathName) {
@@ -59,12 +45,12 @@ public enum FRBiomeFeatures {
 
         public static void registerAll() {
             for (FRConfiguredFeaturesRegistry value : values()) {
-                value.configuredFeatureRegistryKey = ResourceKey.create(Registries.CONFIGURED_FEATURE, value.featureIdentifier);
+                value.configuredFeatureRegistryKey = ResourceKey.create(Registries.FEATURE, value.featureIdentifier);
                 value.featureRegistryKey = ResourceKey.create(Registries.PLACED_FEATURE, value.featureIdentifier);
             }
         }
 
-        public ResourceKey<ConfiguredFeature<?, ?>> configKey() {
+        public ResourceKey<Feature> configKey() {
             return configuredFeatureRegistryKey;
         }
 

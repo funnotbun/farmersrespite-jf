@@ -17,7 +17,7 @@
     "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "farmersrespite:brewing/long_black_tea"
+        "recipes": "farmersrespite:brewing/long_black_tea"
       }
     }
   },

@@ -5,8 +5,6 @@ import com.chefsdelights.farmersrespite.common.block.entity.inventory.ItemHandle
 import com.chefsdelights.farmersrespite.core.registry.FRBlockEntityTypes;
 import com.chefsdelights.farmersrespite.core.registry.FRSounds;
 import com.chefsdelights.farmersrespite.core.utility.MathUtils;
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.BlockPos;
@@ -19,6 +17,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Prediction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.*;
 import net.minecraft.world.entity.LivingEntity;
@@ -55,7 +54,6 @@ import vectorwing.farmersdelight.common.tag.ModTags;
 
 @SuppressWarnings("deprecation")
 public class KettleBlock extends BaseEntityBlock implements SimpleWaterloggedBlock {
-    public static final MapCodec<KettleBlock> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(propertiesCodec()).apply(inst, KettleBlock::new));
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<CookingPotSupport> SUPPORT = EnumProperty.create("support", CookingPotSupport.class);
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
@@ -68,11 +66,6 @@ public class KettleBlock extends BaseEntityBlock implements SimpleWaterloggedBlo
     public KettleBlock(BlockBehaviour.Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(SUPPORT, CookingPotSupport.NONE).setValue(WATERLOGGED, false).setValue(WATER_LEVEL, 0).setValue(LID, true));
-    }
-
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
     }
 
     @Override
@@ -112,7 +105,7 @@ public class KettleBlock extends BaseEntityBlock implements SimpleWaterloggedBlo
                 ItemStack servingStack = kettleEntity.useHeldItemOnMeal(heldStack);
                 if (servingStack != ItemStack.EMPTY) {
                     if (!player.getInventory().add(servingStack)) {
-                        player.drop(servingStack, false);
+                        player.drop(servingStack, false, Prediction.SERVER_ONLY);
                     }
                     world.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.BLOCKS, 1.0F, 1.0F);
                 } else {

@@ -17,7 +17,7 @@
     "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "farmersrespite:brewing/dandelion_tea"
+        "recipes": "farmersrespite:brewing/dandelion_tea"
       }
     }
   },

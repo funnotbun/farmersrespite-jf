@@ -56,6 +56,8 @@ public class FarmersRespite implements ModInitializer {
         //registerVillagerTradeOffer();
         FRConfiguration.register();
         FRCommonSetup.init();
+        // Synchronize the kettle serializer so recipes reach the client (JEI, recipe book)
+        net.fabricmc.fabric.api.recipe.v1.sync.RecipeSynchronization.synchronizeRecipeSerializer(FRRecipeSerializers.KETTLE);
         FRBiomeFeatures.FRConfiguredFeaturesRegistry.registerAll();
         FRBiomeFeatures.registerAll();
         FRGeneration.init();

@@ -21,7 +21,7 @@
     "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "farmersrespite:rose_hip_pie_from_slices"
+        "recipes": "farmersrespite:rose_hip_pie_from_slices"
       }
     }
   },
