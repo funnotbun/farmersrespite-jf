@@ -63,6 +63,7 @@ dependencies {
 
 	// JEI (optional client integration; never bundled)
 	compileOnly("maven.modrinth:jei:${jei_version}")
+	localRuntime("maven.modrinth:jei:${jei_version}")
 }
 
 processResources {
