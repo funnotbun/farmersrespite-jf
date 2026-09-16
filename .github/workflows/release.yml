@@ -1,0 +1,33 @@
+# Build the mod and attach the compiled jars to a GitHub release.
+# Tag a branch to cut a release, e.g.:
+#   git tag 26.2-v2.3.1 fabric/26.2 && git push origin 26.2-v2.3.1
+#   git tag 26.3-v2.3.1 fabric/26.3 && git push origin 26.3-v2.3.1
+
+name: release
+on:
+  push:
+    tags: ['26.*-v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+      - name: setup jdk 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: 25
+          distribution: 'temurin'
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+      - name: build
+        run: ./gradlew build
+      - name: attach jars to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/libs/*.jar
+          generate_release_notes: true
